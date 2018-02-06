@@ -49,6 +49,14 @@ def ICD9(adm_file="../ADMISSIONS.csv",diag_file="../DIAGNOSES_ICD.csv",ICD9_coun
         data_s["ICD9_CODE_"+str(idx)]=data_s["ICD9_CODE_"+str(idx)].str[:3]
     #Add days granularity
     data_s["ELAPSED_DAYS"]=data_s["ELAPSED_TIME"].dt.days
-    data_s.to_csv(outfile)
+
     print("Number of unique patients : "+str(len(data_s["SUBJECT_ID"].unique())))
+
+    #Check number of unique ICD9 Codes
+    ICD_serie=data_s["ICD9_CODE_1"]
+    for idx in range(2,Diag_num+1):
+        ICD_serie=ICD_serie.append(data_s["ICD9_CODE_"+str(idx)])
+    print("Number of unique conditions : "+str(len(ICD_serie.unique())))
+    
+    data_s.to_csv(outfile)
     return data_s
