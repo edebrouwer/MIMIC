@@ -31,9 +31,19 @@ def ICD9(adm_file="../ADMISSIONS.csv",diag_file="../DIAGNOSES_ICD.csv",ICD9_coun
     admit_group.rename(columns={"ADMITTIME":"REF_TIME"},inplace=True)
     data_m=pd.merge(data_m,admit_group,on="SUBJECT_ID")
     data_m["ELAPSED_TIME"]=data_m["ADMITTIME"]-data_m["REF_TIME"]
+
+    #Add special rows for the death times
+    data_m["DEATH"]=0
+    dead_rows=data_m[data_m.DEATHTIME.notnull()][["SUBJECT_ID","DEATHTIME","REF_TIME"]]
+    dead_rows['DEATHTIME']=pd.to_datetime(dead_rows["DEATHTIME"], format='%Y-%m-%d %H:%M:%S')
+    dead_rows["ELAPSED_TIME"]=dead_rows["DEATHTIME"]-dead_rows["REF_TIME"]
+    dead_rows["DEATH"]=1
+    #Concatenate dfs
+    data_death=pd.concat([data_m,dead_rows])
+
     #Select only the attributes we are interested in :
-    col_selection=["SUBJECT_ID","ELAPSED_TIME"]+list(data_m)[19:19+Diag_num]
-    data_s=data_m[col_selection]
+    col_selection=["SUBJECT_ID","ELAPSED_TIME","DEATH"]+list(data_m)[19:19+Diag_num]
+    data_s=data_death[col_selection].sort_values(["SUBJECT_ID","ELAPSED_TIME"])
     #Clean the ICD9 to 3 digits
     for idx in range(1,Diag_num+1):
         data_s["ICD9_CODE_"+str(idx)]=data_s["ICD9_CODE_"+str(idx)].str[:3]
