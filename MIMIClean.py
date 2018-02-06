@@ -50,4 +50,5 @@ def ICD9(adm_file="../ADMISSIONS.csv",diag_file="../DIAGNOSES_ICD.csv",ICD9_coun
     #Add days granularity
     data_s["ELAPSED_DAYS"]=data_s["ELAPSED_TIME"].dt.days
     data_s.to_csv(outfile)
+    print("Number of unique patients : "+str(len(data_s["SUBJECT_ID"].unique())))
     return data_s
