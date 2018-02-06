@@ -4,7 +4,7 @@ from datetime import datetime
 import pandas as pd
 import numpy as np
 
-def ICD9(adm_file="../ADMISSIONS.csv",diag_file="../DIAGNOSES_ICD.csv",ICD9_count=3):
+def ICD9(adm_file="../ADMISSIONS.csv",diag_file="../DIAGNOSES_ICD.csv",ICD9_count=3,outfile=None):
     #This function gives back a df with the time of admissions of each patient
     #with the first admission as reference and their ICD9_count first diagnostics for each
     #admission. The ICD9 codes are cropped so that only the 3 first digits remain.
@@ -30,7 +30,6 @@ def ICD9(adm_file="../ADMISSIONS.csv",diag_file="../DIAGNOSES_ICD.csv",ICD9_coun
     admit_group=data_m.groupby("SUBJECT_ID",as_index=False)["ADMITTIME"].min()
     admit_group.rename(columns={"ADMITTIME":"REF_TIME"},inplace=True)
     data_m=pd.merge(data_m,admit_group,on="SUBJECT_ID")
-    print(data_m.head())
     data_m["ELAPSED_TIME"]=data_m["ADMITTIME"]-data_m["REF_TIME"]
     #Select only the attributes we are interested in :
     col_selection=["SUBJECT_ID","ELAPSED_TIME"]+list(data_m)[19:19+Diag_num]
@@ -38,4 +37,5 @@ def ICD9(adm_file="../ADMISSIONS.csv",diag_file="../DIAGNOSES_ICD.csv",ICD9_coun
     #Clean the ICD9 to 3 digits
     for idx in range(1,Diag_num+1):
         data_s["ICD9_CODE_"+str(idx)]=data_s["ICD9_CODE_"+str(idx)].str[:3]
+    data_s.to_csv(outfile)
     return data_s
