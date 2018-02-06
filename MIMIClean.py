@@ -4,16 +4,17 @@ from datetime import datetime
 import pandas as pd
 import numpy as np
 
-def ICD9(adm_file="ADMISSIONS.csv",ICD9_count=3):
+def ICD9(adm_file="../ADMISSIONS.csv",diag_file="../DIAGNOSES_ICD.csv",ICD9_count=3):
     #This function gives back a df with the time of admissions of each patient
     #with the first admission as reference and their ICD9_count first diagnostics for each
     #admission. The ICD9 codes are cropped so that only the 3 first digits remain.
+    print(adm_file)
     adm=pd.read_csv(adm_file)
     df=adm.groupby("SUBJECT_ID")["HADM_ID"].nunique()
     subj_ids=list(df[df>1].index)
     adm_filtered=adm.loc[adm["SUBJECT_ID"].isin(subj_ids)]
     #Add the condition diagnostic in ICD9 codes.
-    diag=pd.read_csv("DIAGNOSES_ICD.csv")
+    diag=pd.read_csv(diag_file)
     data_m=adm_filtered
     #only select primary diagnosis :
     Diag_num=ICD9_count
