@@ -47,5 +47,7 @@ def ICD9(adm_file="../ADMISSIONS.csv",diag_file="../DIAGNOSES_ICD.csv",ICD9_coun
     #Clean the ICD9 to 3 digits
     for idx in range(1,Diag_num+1):
         data_s["ICD9_CODE_"+str(idx)]=data_s["ICD9_CODE_"+str(idx)].str[:3]
+    #Add days granularity
+    data_s["ELAPSED_DAYS"]=data_s["ELAPSED_TIME"].dt.days
     data_s.to_csv(outfile)
     return data_s
