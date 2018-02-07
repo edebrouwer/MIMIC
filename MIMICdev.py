@@ -3,6 +3,7 @@
 from datetime import datetime
 import pandas as pd
 import numpy as np
+import progressbar
 
 def ICD9(adm_file="../ADMISSIONS.csv",diag_file="../DIAGNOSES_ICD.csv",ICD9_count=3,outfile=None):
     #This function gives back a df with the time of admissions of each patient
@@ -106,7 +107,8 @@ def run_inference(X,K=2,sig2=1,iterT=20,lr=0.5):
     #latent vectors intialization
     U=0.1*np.random.randn(X.shape[0],K,X.shape[2]) #[patient x K x time]
     V=0.1*np.random.randn(K,X.shape[1]) #[K x conditions]
-    for loop in range(0,iterT):
+    bar= progressbar.ProgressBar()
+    for loop in bar(range(0,iterT)):
         for t_idx in range(0,X.shape[2]):
             for u_idx in range(0,X.shape[0]):
                 U[u_idx,:,t_idx]+=lr*grad_u(u_idx,t_idx,U,V,data_u=X[u_idx,:,t_idx],sig2=sig2)
