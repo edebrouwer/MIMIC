@@ -61,10 +61,11 @@ def ICD9(adm_file="../ADMISSIONS.csv",diag_file="../DIAGNOSES_ICD.csv",ICD9_coun
     data_s.to_csv(outfile)
     return data_s
 
-def matrix_creation(ICD9_file="../ICD9Clean.csv",granul=5):
+def matrix_creation(ICD9_file="../ICD9Clean.csv",granul=5,ICD9_count=3):
     #Input file for the matrix creation
     #The desired granularity in days.
     dat=pd.read_csv(ICD9_file)
+    Diag_num=ICD9_count
 
     #Give new indexes for subjects.
     old_ID=dat["SUBJECT_ID"].unique()
@@ -73,10 +74,9 @@ def matrix_creation(ICD9_file="../ICD9Clean.csv",granul=5):
 
     #Check number of unique ICD9 Codes and give new indexes.
     ICD_serie=dat["ICD9_CODE_1"]
-    Diag_num=3
     for idx in range(2,Diag_num+1):
         ICD_serie=ICD_serie.append(dat["ICD9_CODE_"+str(idx)])
-    unique_codes=np.unique(ICD_serie[~np.isnan(ICD_serie)])
+    unique_codes=np.unique(ICD_serie[~pd.isnull(ICD_serie)])
     print("Number of unique conditions : "+str(len(unique_codes)))
 
     #Attention : the index 0 is reserved for the NA in condition (usually corresponds to death.)
