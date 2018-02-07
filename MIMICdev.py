@@ -77,7 +77,6 @@ def matrix_creation(ICD9_file="../ICD9Clean.csv",granul=5,ICD9_count=3):
     for idx in range(2,Diag_num+1):
         ICD_serie=ICD_serie.append(dat["ICD9_CODE_"+str(idx)])
     unique_codes=np.unique(ICD_serie[~pd.isnull(ICD_serie)])
-    print("Number of unique conditions : "+str(len(unique_codes)))
 
     #Attention : the index 0 is reserved for the NA in condition (usually corresponds to death.)
     ICD9_map=dict(zip(unique_codes,range(1,len(unique_codes)+1)))
@@ -89,7 +88,6 @@ def matrix_creation(ICD9_file="../ICD9Clean.csv",granul=5,ICD9_count=3):
 
     #Convert time to the required granularity (Here 5 days)
     dat["ELAPSED_5d"]=np.floor(dat["ELAPSED_DAYS"]/granul).astype(int)
-    print(max(dat["ELAPSED_5d"]))
 
     #Create the data matrix
     X=np.full((len(old_ID),len(unique_codes)+1,max(dat["ELAPSED_5d"])+1),fill_value=np.nan)
@@ -103,3 +101,59 @@ def matrix_creation(ICD9_file="../ICD9Clean.csv",granul=5,ICD9_count=3):
     for cdx in range(1,Diag_num+1):
         X[dat["ID"],dat["CONDITION_"+str(cdx)],dat["ELAPSED_5d"]]=1
     return X
+
+def run_inference(K=2,sig2=1,iterT,X,lr=0.9):
+    #latent vectors intialization
+    U=0.1*np.random.randn(X.shape[0],K,X.shape[2]) #[patient x K x time]
+    V=0.1*np.random.randn(K,X.shape[1] #[K x conditions]
+    for loop in range(0,iterT):
+        print("Loop number is "+str(loop)+" and U is "+str(U[0,:,2]))
+        for t_idx in range(0,X.shape[2]:
+            for u_idx in range(0,X.shape[0]:
+                U[u_idx,:,t_idx]+=lr*grad_u(u_idx,t_idx,U,V,data_u=X[u_idx,:,t_idx])
+            for v_idx in range(0,X.shape[1]:
+                V[:,v_idx]+=lr*grad_v(t_idx,v_idx,U,V,data_v=X[:,v_idx,t_idx])
+    return [U,V]
+
+#function to return the gradient of the posterior with respect to U_i
+#at t=t
+def grad_u(u_idx,t_idx,U,V,data_u):
+   # u_idx=1 #patient
+   # t_idx=4 #time
+   # v_idx=2 #condition
+   # data_u=X[u_idx,:,t_idx]
+    u=U[u_idx,:,t_idx]
+    prod=np.exp(-np.dot(u,V))
+    mask_u=data_u*2-1
+    com_fact=(mask_u*(data_u*prod+(1-data_u)))/(1+prod)
+    grad_1=np.nansum(V*com_fact,axis=1) #gradient of the vector u in each dimension.
+
+    u_prev=U[u_idx,:,t_idx-1]
+    if t_idx==max(dat["ELAPSED_5d"]):
+        u_next=u
+    else:
+        u_next=U[u_idx,:,t_idx+1]
+    grad_2=(u_prev+u_next-2*u)/sig2
+
+    if (t_idx==0):
+        grad_2=-u/sig2
+
+    grad=grad_1+grad_2 #gradient for the u vector
+    return grad
+
+#function to return the gradient of the posterior with respect to V_j
+def grad_v(t_idx,v_idx,U,V,data_v):
+    #u_idx=1 #patient
+    #t_idx=4 #time
+    #v_idx=2 #condition
+    #data_v=X[:,v_idx,t_idx]
+    v=V[:,v_idx]
+    prod=np.exp(-np.dot(U[:,:,t_idx],v))
+    mask_v=data_v*2-1
+    com_fact=(mask_v*(data_v*prod+(1-data_v)))/(1+prod)
+    grad_1=np.nansum(U[:,:,t_idx].T*com_fact,axis=1) #gradient of the vector u in each dimension.
+
+    grad_2=-v/sig2
+
+    grad=grad_1+grad_2 #gradient for the u vector
+    return grad
