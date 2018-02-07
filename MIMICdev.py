@@ -102,22 +102,21 @@ def matrix_creation(ICD9_file="../ICD9Clean.csv",granul=5,ICD9_count=3):
         X[dat["ID"],dat["CONDITION_"+str(cdx)],dat["ELAPSED_5d"]]=1
     return X
 
-def run_inference(K=2,sig2=1,iterT,X,lr=0.9):
+def run_inference(X,K=2,sig2=1,iterT=20,lr=0.5):
     #latent vectors intialization
     U=0.1*np.random.randn(X.shape[0],K,X.shape[2]) #[patient x K x time]
-    V=0.1*np.random.randn(K,X.shape[1] #[K x conditions]
+    V=0.1*np.random.randn(K,X.shape[1]) #[K x conditions]
     for loop in range(0,iterT):
-        print("Loop number is "+str(loop)+" and U is "+str(U[0,:,2]))
-        for t_idx in range(0,X.shape[2]:
-            for u_idx in range(0,X.shape[0]:
-                U[u_idx,:,t_idx]+=lr*grad_u(u_idx,t_idx,U,V,data_u=X[u_idx,:,t_idx])
-            for v_idx in range(0,X.shape[1]:
-                V[:,v_idx]+=lr*grad_v(t_idx,v_idx,U,V,data_v=X[:,v_idx,t_idx])
+        for t_idx in range(0,X.shape[2]):
+            for u_idx in range(0,X.shape[0]):
+                U[u_idx,:,t_idx]+=lr*grad_u(u_idx,t_idx,U,V,data_u=X[u_idx,:,t_idx],sig2=sig2)
+            for v_idx in range(0,X.shape[1]):
+                V[:,v_idx]+=lr*grad_v(t_idx,v_idx,U,V,data_v=X[:,v_idx,t_idx],sig2=sig2)
     return [U,V]
 
 #function to return the gradient of the posterior with respect to U_i
 #at t=t
-def grad_u(u_idx,t_idx,U,V,data_u):
+def grad_u(u_idx,t_idx,U,V,data_u,sig2):
    # u_idx=1 #patient
    # t_idx=4 #time
    # v_idx=2 #condition
@@ -129,7 +128,7 @@ def grad_u(u_idx,t_idx,U,V,data_u):
     grad_1=np.nansum(V*com_fact,axis=1) #gradient of the vector u in each dimension.
 
     u_prev=U[u_idx,:,t_idx-1]
-    if t_idx==max(dat["ELAPSED_5d"]):
+    if t_idx==(U.shape[2]-1):
         u_next=u
     else:
         u_next=U[u_idx,:,t_idx+1]
@@ -142,7 +141,7 @@ def grad_u(u_idx,t_idx,U,V,data_u):
     return grad
 
 #function to return the gradient of the posterior with respect to V_j
-def grad_v(t_idx,v_idx,U,V,data_v):
+def grad_v(t_idx,v_idx,U,V,data_v,sig2):
     #u_idx=1 #patient
     #t_idx=4 #time
     #v_idx=2 #condition
