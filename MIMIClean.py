@@ -57,6 +57,49 @@ def ICD9(adm_file="../ADMISSIONS.csv",diag_file="../DIAGNOSES_ICD.csv",ICD9_coun
     for idx in range(2,Diag_num+1):
         ICD_serie=ICD_serie.append(data_s["ICD9_CODE_"+str(idx)])
     print("Number of unique conditions : "+str(len(ICD_serie.unique())))
-    
+
     data_s.to_csv(outfile)
     return data_s
+
+def matrix_creation(ICD9_file="../ICD9Clean.csv",granul=5):
+    #Input file for the matrix creation
+    #The desired granularity in days.
+    dat=pd.read_csv(ICD9_file)
+
+    #Give new indexes for subjects.
+    old_ID=dat["SUBJECT_ID"].unique()
+    n_dict=dict(zip(old_ID,range(0,len(old_ID))))
+    dat["ID"]=dat["SUBJECT_ID"].map(n_dict)
+
+    #Check number of unique ICD9 Codes and give new indexes.
+    ICD_serie=dat["ICD9_CODE_1"]
+    Diag_num=3
+    for idx in range(2,Diag_num+1):
+        ICD_serie=ICD_serie.append(dat["ICD9_CODE_"+str(idx)])
+    unique_codes=np.unique(ICD_serie[~np.isnan(ICD_serie)])
+    print("Number of unique conditions : "+str(len(unique_codes)))
+
+    #Attention : the index 0 is reserved for the NA in condition (usually corresponds to death.)
+    ICD9_map=dict(zip(unique_codes,range(1,len(unique_codes)+1)))
+    dat["ID"]=dat["SUBJECT_ID"].map(n_dict)
+    condition_vect=[]
+    for idx in range(1,Diag_num+1):
+        dat["CONDITION_"+str(idx)]=dat["ICD9_CODE_"+str(idx)].map(ICD9_map).fillna(0).astype(int)
+        condition_vect=condition_vect+["CONDITION_"+str(idx)]
+
+    #Convert time to the required granularity (Here 5 days)
+    dat["ELAPSED_5d"]=np.floor(dat["ELAPSED_DAYS"]/granul).astype(int)
+    print(max(dat["ELAPSED_5d"]))
+
+    #Create the data matrix
+    X=np.full((len(old_ID),len(unique_codes)+1,max(dat["ELAPSED_5d"])+1),fill_value=np.nan)
+
+    #Fill the matrix:
+    for idx in range(0,len(old_ID)):
+        l_u=list(set(dat[dat["ID"]==idx][condition_vect].values.flatten()))
+        m_t=max(dat[dat["ID"]==idx]["ELAPSED_5d"])
+        X[idx,0,:m_t+1]=0
+        X[idx,l_u,:m_t+1]=0
+    for cdx in range(1,Diag_num+1):
+        X[dat["ID"],dat["CONDITION_"+str(cdx)],dat["ELAPSED_5d"]]=1
+    return X
