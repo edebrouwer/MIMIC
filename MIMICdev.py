@@ -103,7 +103,7 @@ def matrix_creation(ICD9_file="../ICD9Clean.csv",granul=5,ICD9_count=3):
         X[dat["ID"],dat["CONDITION_"+str(cdx)],dat["ELAPSED_5d"]]=1
     return X
 
-def run_inference(X,K=2,sig2=1,iterT=20,lr=0.5):
+def run_inference(X,K=2,sig2=0.2,iterT=20,lr=0.1):
     #latent vectors intialization
     U=0.1*np.random.randn(X.shape[0],K,X.shape[2]) #[patient x K x time]
     V=0.1*np.random.randn(K,X.shape[1]) #[K x conditions]
