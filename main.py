@@ -5,8 +5,8 @@ import MIMICtorch as mtorch
 import torch
 import numpy as np
 
-#X_source=dev.matrix_creation()
-X_source=np.ones((10,10,10))
+X_source=dev.matrix_creation()
+#X_source=np.ones((10,10,10))
 
 [X_train,X_mask,Xtest]=mtorch.pre_proc_data(X_source,prop=0.2)
 
