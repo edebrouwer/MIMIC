@@ -47,7 +47,7 @@ def run_training(X,X_mask,sig2=4,K=2,l_r=0.01):
         prev=total_loss.data[0]
         total_loss.backward()
         optimizer.step()
-    return([U,V,Xtest])
+    return([U,V])
 
 def forward(U,V):
     y=torch.sigmoid(torch.dot(U,V))
