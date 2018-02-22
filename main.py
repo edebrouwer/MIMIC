@@ -5,12 +5,17 @@ import MIMICtorch as mtorch
 import torch
 import numpy as np
 
+print("Loading Data")
 X_source=dev.matrix_creation()
 #X_source=np.ones((10,10,10))
+print("Data Loaded")
 
+print("Pre-processing data")
 [X_train,X_mask,Xtest]=mtorch.pre_proc_data(X_source,prop=0.2)
+print("Pre-processing done")
 
 #training:
+print("Training")
 [U,V]=mtorch.run_training(X_train,X_mask,sig2=4,K=2,l_r=0.01)
 
 #test:
