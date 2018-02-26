@@ -9,6 +9,7 @@ import numpy as np
 
 print("Loading Data")
 X_source=dev.matrix_creation()
+print("Data Sourced")
 
 pat=150
 cond=150
