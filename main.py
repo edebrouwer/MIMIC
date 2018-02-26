@@ -8,7 +8,7 @@ import torch
 import numpy as np
 
 print("Loading Data")
-#X_source=dev.matrix_creation()
+X_source=dev.matrix_creation()
 
 pat=150
 cond=150
@@ -18,7 +18,7 @@ V_train=np.random.randn(K_train,cond) #latent_dim,condition
 #X_prod=np.dot(U_train,V_train)
 X_prod=np.einsum('ijk,jl->ilk',U_train,V_train)
 X_prob=mtorch.sigmoid(X_prod)
-X_source=np.random.binomial(1,X_prob)
+#X_source=np.random.binomial(1,X_prob)
 
 #X_source=np.ones((10,10,10))
 
