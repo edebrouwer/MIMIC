@@ -2,31 +2,52 @@
 import MIMICdev as dev
 import MIMICtorch as mtorch
 
+from MIMICtorch import EHRDataset
+
 import torch
 import numpy as np
 
 print("Loading Data")
-X_source=dev.matrix_creation()
-#X_source=np.ones((10,10,10))
-print("Data Loaded")
+#X_source=dev.matrix_creation()
 
-print("Pre-processing data")
-[X_train,X_mask,Xtest]=mtorch.pre_proc_data(X_source,prop=0.2)
-print("Pre-processing done")
+pat=150
+cond=150
+K_train=2
+U_train=np.random.randn(pat,K_train,1) #Patient,latent_dim,time
+V_train=np.random.randn(K_train,cond) #latent_dim,condition
+#X_prod=np.dot(U_train,V_train)
+X_prod=np.einsum('ijk,jl->ilk',U_train,V_train)
+X_prob=mtorch.sigmoid(X_prod)
+X_source=np.random.binomial(1,X_prob)
+
+#X_source=np.ones((10,10,10))
+
+
+
+[Xtrain,Xtest]=mtorch.train_test(X_source,0.01)
+ehr=EHRDataset(Xtrain)
+print("Data Loaded !")
+
+#print("Pre-processing data")
+#[X_train,X_mask,Xtest]=mtorch.pre_proc_data(X_source,prop=0.2)
+#print("Pre-processing done !")
 
 #training:
 print("Training")
-[U,V]=mtorch.run_training(X_train,X_mask,sig2=4,K=2,l_r=0.01)
+[U,V]=mtorch.run_training(ehr,sig2=4,K=2,l_r=0.01)
 
 #test:
 test_loss=mtorch.test_loss(Xtest,U,V)
-print(test_loss)
-print(np.exp(-test_loss))
+print("Overall test loss: "+str(test_loss))
+print("Average probability of correct prediction: " +str(np.exp(-test_loss)))
 
 Unp=U.data.numpy()
 Vnp=V.data.numpy()
 
+X_prob_inf=mtorch.sigmoid(np.einsum('ijk,jl->ilk',Unp,Vnp))
+print('Mean difference of probabilities : '+str(np.mean(np.abs(X_prob_inf-X_prob))))
+
 np.save("Utorch",Unp)
 np.save("Vtorch",Vnp)
-np.save("Xtrain",X_train.numpy())
+np.save("Xtrain",Xtrain)
 np.save("Xtest",Xtest)
