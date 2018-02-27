@@ -9,6 +9,7 @@ def ICD9(adm_file="../ADMISSIONS.csv",diag_file="../DIAGNOSES_ICD.csv",ICD9_coun
     #This function gives back a df with the time of admissions of each patient
     #with the first admission as reference and their ICD9_count first diagnostics for each
     #admission. The ICD9 codes are cropped so that only the 3 first digits remain.
+    #ICD9 counts is the number of ICD9 codes we consider by admission.
     print("Reading from "+adm_file)
     adm=pd.read_csv(adm_file)
     df=adm.groupby("SUBJECT_ID")["HADM_ID"].nunique()
@@ -104,7 +105,7 @@ def matrix_creation(ICD9_file="../ICD9Clean.csv",granul=5,ICD9_count=3):
         X[dat["ID"],dat["CONDITION_"+str(cdx)],dat["ELAPSED_5d"]]=1
 
     #Clean the time steps (remove the tail (0.9) of the distribution)
-    X=clean_time(X,quantile=0.9)
+    #X=clean_time(X,quantile=0.9)
 
     #Go for sparse representation.
     X_idx=np.asarray(np.where(~np.isnan(X)))
