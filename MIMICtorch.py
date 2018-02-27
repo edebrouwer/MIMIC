@@ -78,10 +78,10 @@ def forward(U,V):
 
 def regul_loss(U,V,i,j,t,sig2):
     regul=torch.sum((V[:,j].pow(2))/sig2) #For V
-
+    #Now for U. Two special cases : when t=0 and when t=T
     if t==0:
         regul+=torch.sum((U[i,:,t].pow(2))/sig2)
-    elif t==U.shape[2]:
+    elif t==(U.shape[2]-1):
         regul+=torch.sum(((U[i,:,t]-U[i,:,t-1]).pow(2))/sig2)
     else:
         regul+=torch.sum(((U[i,:,t]-U[i,:,t-1]).pow(2))/sig2)+torch.sum(((U[i,:,t+1]-U[i,:,t]).pow(2))/sig2)
