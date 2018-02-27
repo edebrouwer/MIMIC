@@ -65,6 +65,7 @@ def ICD9(adm_file="../ADMISSIONS.csv",diag_file="../DIAGNOSES_ICD.csv",ICD9_coun
 def matrix_creation(ICD9_file="../ICD9Clean.csv",granul=5,ICD9_count=3):
     #Input file for the matrix creation
     #The desired granularity in days.
+    #Return a tuple with the index and values of the non empty elements of the matrix.
     dat=pd.read_csv(ICD9_file)
     Diag_num=ICD9_count
 
@@ -101,7 +102,10 @@ def matrix_creation(ICD9_file="../ICD9Clean.csv",granul=5,ICD9_count=3):
         X[idx,l_u,:m_t+1]=0
     for cdx in range(1,Diag_num+1):
         X[dat["ID"],dat["CONDITION_"+str(cdx)],dat["ELAPSED_5d"]]=1
-    return X
+
+    X_idx=np.asarray(np.where(~np.isnan(X)))
+    X_dat=X[tuple(X_idx)]
+    return (X_idx,X_dat)
 
 def run_inference(X,K=2,sig2=0.2,iterT=20,lr=0.1):
     #latent vectors intialization

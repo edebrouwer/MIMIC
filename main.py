@@ -8,7 +8,7 @@ import torch
 import numpy as np
 
 print("Loading Data")
-X_source=dev.matrix_creation()
+X_source=dev.matrix_creation() # Tuple with index and data of the matrix source.
 print("Data Sourced")
 
 pat=150

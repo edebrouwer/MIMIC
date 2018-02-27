@@ -98,26 +98,21 @@ def gruyering(X,prop=0.1): #Returns a matrix with a proportion of its entries = 
 
 def train_test(X,prop): #Divide the matrix in train and test set. Non values are set to nan.
 
-    valid_index=np.asarray(np.where(~np.isnan(X)))
-    train_samps=len(valid_index[0]) #number of non nan values
+    #valid_index=np.asarray(np.where(~np.isnan(X)))
+    train_samps=len(X[0][0]) #number of non nan values
     test_num=int(prop*train_samps) #Number of test values
-    permut=np.random.permutation(len(valid_index[0]))
+    permut=np.random.permutation(len(X[0][0]))
 
     test_idx=permut[:test_num]
     train_idx=permut[test_num:]
 
-    test_ids=tuple(valid_index[:,test_idx])
-    train_ids=tuple(valid_index[:,train_idx])
+    test_ids=X[0][:,test_idx]
+    train_ids=X[0][:,train_idx]
 
-    Xtest=np.empty(X.shape)
-    Xtest[:]=np.nan
-    Xtest[test_ids]=X[test_ids]
+    Xtest=X[1][tuple(test_ids)]
+    Xtrain=X[1][tuple(train_ids)]
 
-    Xtrain=np.empty(X.shape)
-    Xtrain[:]=np.nan
-    Xtrain[train_ids]=X[train_ids]
-
-    return([Xtrain,Xtest])
+    return([(train_ids,Xtrain),(test_ids,Xtest)])
 
 class EHRDataset(Dataset):
     """Face Landmarks dataset."""
