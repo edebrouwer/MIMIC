@@ -63,7 +63,7 @@ def ICD9(adm_file="../ADMISSIONS.csv",diag_file="../DIAGNOSES_ICD.csv",ICD9_coun
     data_s.to_csv(outfile)
     return data_s
 
-def matrix_creation(ICD9_file="../ICD9Clean.csv",granul=5,ICD9_count=3):
+def matrix_creation(ICD9_file="../ICD9Clean.csv",granul=5,ICD9_count=3,ICD9_cap=3,Time_quantile=0.9):
     #Input file for the matrix creation
     #The desired granularity in days.
     #Return a tuple with the index and values of the non empty elements of the matrix.
@@ -79,6 +79,11 @@ def matrix_creation(ICD9_file="../ICD9Clean.csv",granul=5,ICD9_count=3):
     ICD_serie=dat["ICD9_CODE_1"]
     for idx in range(2,Diag_num+1):
         ICD_serie=ICD_serie.append(dat["ICD9_CODE_"+str(idx)])
+    #Remove codes that  appear less than ICD9_cap times
+    counts_ICD9=ICD_serie.value_counts()
+    to_delete=counts_ICD9[counts_ICD9<ICD9_cap]
+    ICD_serie.replace(to_delete.index,np.nan,inplace=True)
+
     unique_codes=np.unique(ICD_serie[~pd.isnull(ICD_serie)])
 
     #Attention : the index 0 is reserved for the NA in condition (usually corresponds to death.)
@@ -96,16 +101,26 @@ def matrix_creation(ICD9_file="../ICD9Clean.csv",granul=5,ICD9_count=3):
     X=np.full((len(old_ID),len(unique_codes)+1,max(dat["ELAPSED_5d"])+1),fill_value=np.nan)
 
     #Fill the matrix:
+    #We suppose that events that already occured and are not reported anymore in the future did not occur until the end of observation (fill with 0)
     for idx in range(0,len(old_ID)):
         l_u=list(set(dat[dat["ID"]==idx][condition_vect].values.flatten()))
         m_t=max(dat[dat["ID"]==idx]["ELAPSED_5d"])
-        X[idx,0,:m_t+1]=0
+        #X[idx,0,:m_t+1]=0 for death, see below.
         X[idx,l_u,:m_t+1]=0
     for cdx in range(1,Diag_num+1):
         X[dat["ID"],dat["CONDITION_"+str(cdx)],dat["ELAPSED_5d"]]=1
+    #Fill DEATH (zeros until death)
+    for idx in range(0,len(old_ID)):
+        m_t=max(dat[dat["ID"]==idx]["ELAPSED_5d"])
+        X[idx,0,:m_t+1]=0
+        if max(dat[dat["ID"]==idx]["DEATH"])==1:
+            X[idx,0,m_t]=1
+
 
     #Clean the time steps (remove the tail (0.9) of the distribution)
-    #X=clean_time(X,quantile=0.9)
+    X=clean_time(X,quantile=Time_quantile)
+
+    #Clean the ICD9 codes that do not occur more than 2 times
 
     #Go for sparse representation.
     X_idx=np.asarray(np.where(~np.isnan(X)))
@@ -119,6 +134,11 @@ def clean_time(X,quantile=0.9):
     X_ordered_duration=np.sort(X_max)
     cap=int(X_ordered_duration[int(len(X_ordered_duration)*quantile)])
     return(X[:,:,:cap+1])
+
+def clean_ICD9(X,cap=2):
+    X_sum=np.nansum(X,axis=2)
+    X_sum2=sum(X_sum)
+
 
 
 def run_inference(X,K=2,sig2=0.2,iterT=20,lr=0.1):
