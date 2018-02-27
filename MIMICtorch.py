@@ -58,7 +58,7 @@ def run_training(ehr_data,sig2=4,K=2,l_r=0.01,**opt_args):
                 total_loss+=regul_loss(U,V,i,j,t,sig2)
             print("Loss is "+str(total_loss.data[0]))
             #total_loss+=regul_loss(U,V,sig2)
-            print("Loss with regul is "+str(total_loss.data[0]))
+            #print("Loss with regul is "+str(total_loss.data[0]))
             delta=abs(prev-total_loss.data[0])
             prev=total_loss.data[0]
             total_loss.backward()
