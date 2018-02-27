@@ -22,9 +22,14 @@ def pre_proc_data(X_source,prop):
     return[X,X_mask,Xtest]
 
 
-def run_training(ehr_data,sig2=4,K=2,l_r=0.01):
+def run_training(ehr_data,sig2=4,K=2,l_r=0.01,**opt_args):
 
-    ehr_loader=DataLoader(ehr_data,batch_size=len(ehr_data))
+    if ('batch_size' in opt_args):
+        batch_size=opt_args['batch_size']
+    else:
+        batch_size=len(ehr_data) #by default the batch size is set to the full length of the data.
+
+    ehr_loader=DataLoader(ehr_data,batch_size=batch_size)
 
     U=Variable(0.1*torch.randn(ehr_data.shape[0],K,ehr_data.shape[2]),requires_grad=True)
     V=Variable(0.1*torch.randn(K,ehr_data.shape[1]),requires_grad=True)
