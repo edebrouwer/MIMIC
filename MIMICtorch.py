@@ -26,8 +26,10 @@ def run_training(ehr_data,sig2=4,K=2,l_r=0.01,**opt_args):
 
     if ('batch_size' in opt_args):
         batch_size=opt_args['batch_size']
+        print("Batch size ="+str(batch_size))
     else:
         batch_size=len(ehr_data) #by default the batch size is set to the full length of the data.
+        print("Full batch")
 
     ehr_loader=DataLoader(ehr_data,batch_size=batch_size)
 
@@ -53,8 +55,9 @@ def run_training(ehr_data,sig2=4,K=2,l_r=0.01,**opt_args):
                     print("Issue NAN")
                     print(U)
                     print(V)
+                total_loss+=regul_loss(U,V,i,j,t,sig2)
             print("Loss is "+str(total_loss.data[0]))
-            total_loss+=regul_loss(U,V,sig2)
+            #total_loss+=regul_loss(U,V,sig2)
             print("Loss with regul is "+str(total_loss.data[0]))
             delta=abs(prev-total_loss.data[0])
             prev=total_loss.data[0]
@@ -67,10 +70,21 @@ def forward(U,V):
     #y=torch.dot(U[u_idx,:],V[:,v_idx])
     return(y)
 
-def regul_loss(U,V,sig2):
-    regul=torch.sum((V.pow(2))/sig2)+torch.sum((U[:,:,0].pow(2))/sig2)
-    for t_idx in range(1,U.shape[2]):
-        regul+=torch.sum(((U[:,:,t_idx]-U[:,:,t_idx-1]).pow(2))/sig2)
+#def regul_loss(U,V,sig2):
+#    regul=torch.sum((V.pow(2))/sig2)+torch.sum((U[:,:,0].pow(2))/sig2)
+#    for t_idx in range(1,U.shape[2]):
+#        regul+=torch.sum(((U[:,:,t_idx]-U[:,:,t_idx-1]).pow(2))/sig2)
+#    return(regul)
+
+def regul_loss(U,V,i,j,t,sig2):
+    regul=torch.sum((V[:,j].pow(2))/sig2) #For V
+
+    if t==0:
+        regul+=torch.sum((U[i,:,t].pow(2))/sig2)
+    elif t==U.shape[2]:
+        regul+=torch.sum(((U[i,:,t]-U[i,:,t-1]).pow(2))/sig2)
+    else:
+        regul+=torch.sum(((U[i,:,t]-U[i,:,t-1]).pow(2))/sig2)+torch.sum(((U[i,:,t+1]-U[i,:,t]).pow(2))/sig2)
     return(regul)
 
 def comp_loss(y_data,y_pred):
