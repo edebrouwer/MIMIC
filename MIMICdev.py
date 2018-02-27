@@ -105,7 +105,7 @@ def matrix_creation(ICD9_file="../ICD9Clean.csv",granul=5,ICD9_count=3):
 
     X_idx=np.asarray(np.where(~np.isnan(X)))
     X_dat=X[tuple(X_idx)]
-    return (X_idx,X_dat)
+    return (X_idx,X_dat,X.shape)
 
 def run_inference(X,K=2,sig2=0.2,iterT=20,lr=0.1):
     #latent vectors intialization

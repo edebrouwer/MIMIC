@@ -109,10 +109,10 @@ def train_test(X,prop): #Divide the matrix in train and test set. Non values are
     test_ids=X[0][:,test_idx]
     train_ids=X[0][:,train_idx]
 
-    Xtest=X[1][tuple(test_ids)]
-    Xtrain=X[1][tuple(train_ids)]
+    Xtest=X[1][test_idx]
+    Xtrain=X[1][train_idx]
 
-    return([(train_ids,Xtrain),(test_ids,Xtest)])
+    return([(train_ids,Xtrain,X[2]),(test_ids,Xtest,X[2])])
 
 class EHRDataset(Dataset):
     """Face Landmarks dataset."""
@@ -125,9 +125,9 @@ class EHRDataset(Dataset):
             transform (callable, optional): Optional transform to be applied
                 on a sample.
         """
-        self.idx=np.where(~np.isnan(X_source))
-        self.data=X_source[self.idx]
-        self.shape=X_source.shape
+        self.idx=X_source[0]
+        self.data=X_source[1]
+        self.shape=X_source[2]
 
     def __len__(self):
         return len(self.idx[0])
