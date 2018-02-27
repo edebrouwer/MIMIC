@@ -116,7 +116,7 @@ def clean_time(X,quantile=0.9):
     for i in range(0,X.shape[0]):
         X_max[i]=max(np.where(~np.isnan(X[i,:,:]))[1])
     X_ordered_duration=np.sort(X_max)
-    cap=X_ordered_duration[int(len(X_ordered_duration)*quantile)]
+    cap=int(X_ordered_duration[int(len(X_ordered_duration)*quantile)])
     return(X[:,:,:cap+1])
 
 
