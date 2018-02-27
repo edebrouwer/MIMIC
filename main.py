@@ -11,8 +11,8 @@ print("Sourcing Data ... ")
 X_source=dev.matrix_creation() # Tuple with index and data of the matrix source.
 print("Data Sourced")
 print("Number of patients: "+str(X_source[2][0]))
-print("Number of conditions: "+str(X_source[2][0]))
-print("Number of time steps: "+str(X_source[2][0]))
+print("Number of conditions: "+str(X_source[2][1]))
+print("Number of time steps: "+str(X_source[2][2]))
 
 #pat=150
 #cond=150
