@@ -103,9 +103,22 @@ def matrix_creation(ICD9_file="../ICD9Clean.csv",granul=5,ICD9_count=3):
     for cdx in range(1,Diag_num+1):
         X[dat["ID"],dat["CONDITION_"+str(cdx)],dat["ELAPSED_5d"]]=1
 
+    #Clean the time steps (remove the tail (0.9) of the distribution)
+    X=clean_time(X,quantile=0.9)
+
+    #Go for sparse representation.
     X_idx=np.asarray(np.where(~np.isnan(X)))
     X_dat=X[tuple(X_idx)]
     return (X_idx,X_dat,X.shape)
+
+def clean_time(X,quantile=0.9):
+    X_max=np.zeros(X.shape[0])
+    for i in range(0,X.shape[0]):
+        X_max[i]=max(np.where(~np.isnan(X[i,:,:]))[1])
+    X_ordered_duration=np.sort(X_duration)
+    cap=X_ordered_duration[int(len(X_ordered_duration)*quantile)]
+    return(X[:,:,:cap+1])
+
 
 def run_inference(X,K=2,sig2=0.2,iterT=20,lr=0.1):
     #latent vectors intialization
