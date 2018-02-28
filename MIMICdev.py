@@ -63,9 +63,9 @@ def ICD9(adm_file="../ADMISSIONS.csv",diag_file="../DIAGNOSES_ICD.csv",ICD9_coun
     data_s.to_csv(outfile)
     return data_s
 
-def matrix_creation(ICD9_file="../ICD9Clean.csv",granul=5,ICD9_count=3,ICD9_cap=3,Time_quantile=0.9):
+def matrix_creation(ICD9_file="../ICD9Clean.csv",granul=7,ICD9_count=3,ICD9_cap=5,Time_quantile=0.8):
     #Input file for the matrix creation
-    #The desired granularity in days.
+    #granul = The desired granularity in days.
     #Return a tuple with the index and values of the non empty elements of the matrix.
     dat=pd.read_csv(ICD9_file)
     Diag_num=ICD9_count
@@ -128,6 +128,7 @@ def matrix_creation(ICD9_file="../ICD9Clean.csv",granul=5,ICD9_count=3,ICD9_cap=
     return (X_idx,X_dat,X.shape)
 
 def clean_time(X,quantile=0.9):
+    #remove the times for which only 1-quantile % of the patients reach this observation time.
     X_max=np.zeros(X.shape[0])
     for i in range(0,X.shape[0]):
         X_max[i]=max(np.where(~np.isnan(X[i,:,:]))[1])
