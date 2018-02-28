@@ -46,6 +46,7 @@ def run_training(ehr_data,sig2=4,K=2,l_r=0.01,**opt_args):
     while(delta>1e-4 and epochs<500):
         #for (i,j,t) in zip(*data_idx):
         for i_batch, sample in enumerate(ehr_loader):
+            print("Batch number : "+str(i_batch))
             optimizer.zero_grad()
             total_loss=0
             for data_sample,i,j,t in zip(sample['data'],sample['i'],sample['j'],sample['t']):
