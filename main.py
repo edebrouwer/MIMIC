@@ -14,15 +14,18 @@ print("Number of patients: "+str(X_source[2][0]))
 print("Number of conditions: "+str(X_source[2][1]))
 print("Number of time steps: "+str(X_source[2][2]))
 
-#pat=150
-#cond=150
-#K_train=2
-#U_train=np.random.randn(pat,K_train,1) #Patient,latent_dim,time
-#V_train=np.random.randn(K_train,cond) #latent_dim,condition
+pat=150
+cond=150
+K_train=2
+U_train=np.random.randn(pat,K_train,1) #Patient,latent_dim,time
+V_train=np.random.randn(K_train,cond) #latent_dim,condition
 #X_prod=np.dot(U_train,V_train)
-#X_prod=np.einsum('ijk,jl->ilk',U_train,V_train)
-#X_prob=mtorch.sigmoid(X_prod)
-#X_source=np.random.binomial(1,X_prob)
+X_prod=np.einsum('ijk,jl->ilk',U_train,V_train)
+X_prob=mtorch.sigmoid(X_prod)
+X_bin=np.random.binomial(1,X_prob)
+X_ids=np.asarray(np.where(~np.isnan(X_bin)))
+X_source=(X_ids,X_bin[tuple(X_ids)],X_bin.shape)
+
 
 #X_source=np.ones((10,10,10))
 
@@ -37,7 +40,7 @@ print("Data Loaded !")
 
 #training:
 print("Training ... ")
-[U,V]=mtorch.run_training(ehr,sig2=4,K=2,l_r=0.01,batch_size=500)
+[U,V]=mtorch.run_training(ehr,sig2=4,K=2,l_r=0.01,batch_size=400)
 print("Done with training ! ")
 #test:
 test_loss=mtorch.test_loss(Xtest,U,V)

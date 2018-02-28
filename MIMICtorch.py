@@ -41,7 +41,9 @@ def run_training(ehr_data,sig2=4,K=2,l_r=0.01,**opt_args):
     #convergence parameters
     delta=1
     prev=1
-    while(delta>1e-5):
+    epochs=0
+    agg_loss=0
+    while(delta>1e-4 and epochs<500):
         #for (i,j,t) in zip(*data_idx):
         for i_batch, sample in enumerate(ehr_loader):
             optimizer.zero_grad()
@@ -55,14 +57,22 @@ def run_training(ehr_data,sig2=4,K=2,l_r=0.01,**opt_args):
                     print("Issue NAN")
                     print(U)
                     print(V)
-                total_loss+=regul_loss(U,V,i,j,t,sig2)
-            print("Loss is "+str(total_loss.data[0]))
-            #total_loss+=regul_loss(U,V,sig2)
-            #print("Loss with regul is "+str(total_loss.data[0]))
-            delta=abs(prev-total_loss.data[0])
-            prev=total_loss.data[0]
+                #total_loss+=regul_loss(U,V,i,j,t,sig2)
+            #print("Loss is "+str(total_loss.data[0]))
+            agg_loss+=total_loss
+            total_loss/=len(sample['data'])
+            regul=regul_loss(U,V,sig2)/len(ehr_data) #A verifier !!!
+            total_loss+=regul # A VERIFIER
+
             total_loss.backward()
             optimizer.step()
+
+        agg_loss=agg_loss/len(ehr_data)+regul
+        print(agg_loss.data[0])
+        delta=abs(prev-agg_loss.data[0])
+        prev=agg_loss.data[0]
+        agg_loss=0
+        epochs+=1
     return([U,V])
 
 def forward(U,V):
@@ -70,22 +80,22 @@ def forward(U,V):
     #y=torch.dot(U[u_idx,:],V[:,v_idx])
     return(y)
 
-#def regul_loss(U,V,sig2):
-#    regul=torch.sum((V.pow(2))/sig2)+torch.sum((U[:,:,0].pow(2))/sig2)
-#    for t_idx in range(1,U.shape[2]):
-#        regul+=torch.sum(((U[:,:,t_idx]-U[:,:,t_idx-1]).pow(2))/sig2)
-#    return(regul)
-
-def regul_loss(U,V,i,j,t,sig2):
-    regul=torch.sum((V[:,j].pow(2))/sig2) #For V
-    #Now for U. Two special cases : when t=0 and when t=T
-    if t==0:
-        regul+=torch.sum((U[i,:,t].pow(2))/sig2)
-    elif t==(U.shape[2]-1):
-        regul+=torch.sum(((U[i,:,t]-U[i,:,t-1]).pow(2))/sig2)
-    else:
-        regul+=torch.sum(((U[i,:,t]-U[i,:,t-1]).pow(2))/sig2)+torch.sum(((U[i,:,t+1]-U[i,:,t]).pow(2))/sig2)
+def regul_loss(U,V,sig2):
+    regul=torch.sum((V.pow(2))/sig2)+torch.sum((U[:,:,0].pow(2))/sig2)
+    for t_idx in range(1,U.shape[2]):
+        regul+=torch.sum(((U[:,:,t_idx]-U[:,:,t_idx-1]).pow(2))/sig2)
     return(regul)
+
+#def regul_loss(U,V,i,j,t,sig2):
+#    regul=torch.sum((V[:,j].pow(2))/sig2) #For V
+#    #Now for U. Two special cases : when t=0 and when t=T
+#    if t==0:
+#        regul+=torch.sum((U[i,:,t].pow(2))/sig2)
+#    elif t==(U.shape[2]-1):
+#        regul+=torch.sum(((U[i,:,t]-U[i,:,t-1]).pow(2))/sig2)
+#    else:
+#        regul+=torch.sum(((U[i,:,t]-U[i,:,t-1]).pow(2))/sig2)+torch.sum(((U[i,:,t+1]-U[i,:,t]).pow(2))/sig2)
+#    return(regul)
 
 def comp_loss(y_data,y_pred):
     loss=-((1-y_data)*torch.log(1-y_pred)+y_data*(torch.log(y_pred)))#+(1/len_v)*torch.sum((V[:,v_idx].pow(2))/sig2)+(1/len_u)*torch.sum((U[u_idx,:].pow(2))/sig2)
@@ -95,9 +105,12 @@ def comp_loss(y_data,y_pred):
 
 def test_loss(Xtest,U,V):
     loss=0
-    test_idx=np.where(~np.isnan(Xtest))
-    for (i,j,t) in zip(*test_idx):
-        y_data=Xtest[i,j,t]
+    test_idx=Xtest[0]
+    for id_y,y in enumerate(Xtest[1]):
+        y_data=y
+        i=test_idx[0,id_y]
+        j=test_idx[1,id_y]
+        t=test_idx[2,id_y]
         y_pred=forward(U[i,:,t],V[:,j])
         loss+=-((1-y_data)*torch.log(1-y_pred)+y_data*(torch.log(y_pred)))
     return(loss/len(test_idx[0]))
