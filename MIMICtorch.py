@@ -22,7 +22,7 @@ def pre_proc_data(X_source,prop):
     return[X,X_mask,Xtest]
 
 
-def run_training(ehr_data,sig2=4,K=2,l_r=0.01,**opt_args):
+def run_training(ehr_data,Xval,sig2=4,K=2,l_r=0.01,**opt_args):
 
     if ('batch_size' in opt_args):
         batch_size=opt_args['batch_size']
@@ -42,11 +42,11 @@ def run_training(ehr_data,sig2=4,K=2,l_r=0.01,**opt_args):
     delta=1
     prev=1
     epochs=0
-    agg_loss=0
-    while(delta>1e-4 and epochs<500):
+    val_loss=0
+    while(delta>1e-4 and epochs<100):
         #for (i,j,t) in zip(*data_idx):
+        print("Epoch :"+str(epochs))
         for i_batch, sample in enumerate(ehr_loader):
-            print("Batch number : "+str(i_batch))
             optimizer.zero_grad()
             total_loss=0
             for data_sample,i,j,t in zip(sample['data'],sample['i'],sample['j'],sample['t']):
@@ -60,7 +60,7 @@ def run_training(ehr_data,sig2=4,K=2,l_r=0.01,**opt_args):
                     print(V)
                 #total_loss+=regul_loss(U,V,i,j,t,sig2)
             #print("Loss is "+str(total_loss.data[0]))
-            agg_loss+=total_loss
+            #agg_loss+=total_loss Used for convergence check
             total_loss/=len(sample['data'])
             regul=regul_loss(U,V,sig2)/len(ehr_data) #A verifier !!!
             total_loss+=regul # A VERIFIER
@@ -68,11 +68,16 @@ def run_training(ehr_data,sig2=4,K=2,l_r=0.01,**opt_args):
             total_loss.backward()
             optimizer.step()
 
-        agg_loss=agg_loss/len(ehr_data)+regul
-        print(agg_loss.data[0])
-        delta=abs(prev-agg_loss.data[0])
-        prev=agg_loss.data[0]
-        agg_loss=0
+            if (i_batch % 10 == 0):
+                val_loss=test_loss(Xval,U,V)+regul_loss(U,V,sig2).data[0]/len(Xval[1])
+                print("Validation Loss : "+str(val_loss))
+                delta=abs(prev-val_loss)
+                prev=val_loss
+                agg_loss=0
+
+        #agg_loss=agg_loss/len(ehr_data)+regul
+        #print(agg_loss.data[0])
+
         epochs+=1
     return([U,V])
 
@@ -104,7 +109,7 @@ def comp_loss(y_data,y_pred):
     #loss=(y_data-y_pred).pow(2)+torch.sum((V[:,2].pow(2))/2)
     return(loss)
 
-def test_loss(Xtest,U,V):
+def test_loss(Xtest,U,V): #returns a float( not a Tensor !!!)
     loss=0
     test_idx=Xtest[0]
     for id_y,y in enumerate(Xtest[1]):
@@ -112,8 +117,8 @@ def test_loss(Xtest,U,V):
         i=test_idx[0,id_y]
         j=test_idx[1,id_y]
         t=test_idx[2,id_y]
-        y_pred=forward(U[i,:,t],V[:,j])
-        loss+=-((1-y_data)*torch.log(1-y_pred)+y_data*(torch.log(y_pred)))
+        y_pred=forward(U[i,:,t],V[:,j]).data[0]
+        loss+=-((1-y_data)*np.log(1-y_pred)+y_data*(np.log(y_pred)))
     return(loss/len(test_idx[0]))
 
 
@@ -129,23 +134,27 @@ def gruyering(X,prop=0.1): #Returns a matrix with a proportion of its entries = 
     X[idx1,idx2,idx3]=0
     return(X)
 
-def train_test(X,prop): #Divide the matrix in train and test set. Non values are set to nan.
+def train_test(X,prop_val,prop_test): #Divide the matrix in train validation and test set. Non values are set to nan.
 
     #valid_index=np.asarray(np.where(~np.isnan(X)))
     train_samps=len(X[0][0]) #number of non nan values
-    test_num=int(prop*train_samps) #Number of test values
+    test_num=int(prop_test*train_samps) #Number of test values
+    val_num=int(prop_val*train_samps)
     permut=np.random.permutation(len(X[0][0]))
 
     test_idx=permut[:test_num]
-    train_idx=permut[test_num:]
+    val_idx=permut[test_num:test_num+val_num]
+    train_idx=permut[test_num+val_num:]
 
     test_ids=X[0][:,test_idx]
+    val_ids=X[0][:,val_idx]
     train_ids=X[0][:,train_idx]
 
     Xtest=X[1][test_idx]
     Xtrain=X[1][train_idx]
+    Xval=X[1][val_idx]
 
-    return([(train_ids,Xtrain,X[2]),(test_ids,Xtest,X[2])])
+    return([(train_ids,Xtrain,X[2]),(val_ids,Xval,X[2]),(test_ids,Xtest,X[2])])
 
 class EHRDataset(Dataset):
     """Face Landmarks dataset."""
