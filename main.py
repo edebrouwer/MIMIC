@@ -41,7 +41,7 @@ print("Data Loaded !")
 
 #training:
 print("Training ... ")
-[U,V]=mtorch.run_training(ehr,sig2=4,K=2,l_r=0.01,batch_size=500)
+[U,V]=mtorch.run_training(ehr,sig2=4,K=2,l_r=0.01,batch_size=10000)
 print("Done with training ! ")
 
 #train recap :
