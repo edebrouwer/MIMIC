@@ -32,6 +32,7 @@ print("Number of time steps: "+str(X_source[2][2]))
 print("Loading data ... ")
 [Xtrain,Xtest]=mtorch.train_test(X_source,0.1)
 ehr=EHRDataset(Xtrain)
+print("Number of data points : "+str(len(Xtrain[1])))
 print("Data Loaded !")
 
 #print("Pre-processing data")
@@ -40,7 +41,7 @@ print("Data Loaded !")
 
 #training:
 print("Training ... ")
-[U,V]=mtorch.run_training(ehr,sig2=4,K=2,l_r=0.01,batch_size=300)
+[U,V]=mtorch.run_training(ehr,sig2=4,K=2,l_r=0.01,batch_size=500)
 print("Done with training ! ")
 
 #train recap :
