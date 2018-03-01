@@ -8,7 +8,7 @@ from MIMICtorch import model_train
 import torch
 import numpy as np
 
-import matplotlib.pyplot as plt
+#import matplotlib.pyplot as plt
 
 
 #dummy data:
