@@ -39,11 +39,17 @@ def run_training(ehr_data,Xval,sig2=4,K=2,l_r=0.01,**opt_args):
     optimizer= torch.optim.Adam([U,V],lr=l_r)
 
     #convergence parameters
-    delta=1
-    prev=1
-    epochs=0
+    Train_history=np.array([])
+    Val_history=np.array([])
+    delta_val=1
+    delta_train=1
+    prev_val=1
+    prev_train=1
     val_loss=0
-    while(delta>1e-4 and epochs<100):
+    agg_loss=0
+    tol=1e-5
+    check_freq=20 #every x batches, we compute training and validation loss.
+    for epochs in range(0,100):
         #for (i,j,t) in zip(*data_idx):
         print("Epoch :"+str(epochs))
         for i_batch, sample in enumerate(ehr_loader):
@@ -58,27 +64,36 @@ def run_training(ehr_data,Xval,sig2=4,K=2,l_r=0.01,**opt_args):
                     print("Issue NAN")
                     print(U)
                     print(V)
-                #total_loss+=regul_loss(U,V,i,j,t,sig2)
-            #print("Loss is "+str(total_loss.data[0]))
-            #agg_loss+=total_loss Used for convergence check
+
+
+
             total_loss/=len(sample['data'])
             regul=regul_loss(U,V,sig2)/len(ehr_data) #A verifier !!!
             total_loss+=regul # A VERIFIER
+            agg_loss+=total_loss.data[0] #Used for convergence check
 
             total_loss.backward()
             optimizer.step()
 
-            if (i_batch % 10 == 0):
+            if ((i_batch+1) % 20 == 0):
                 val_loss=test_loss(Xval,U,V)+regul_loss(U,V,sig2).data[0]/len(Xval[1])
+                Val_history=np.append(Val_history,val_loss)
+                agg_loss/=20
+                Train_history=np.append(Train_history,val_loss)
                 print("Validation Loss : "+str(val_loss))
-                delta=abs(prev-val_loss)
-                prev=val_loss
+                print("Training Loss : "+str(agg_loss))
+                delta_val=abs(prev_val-val_loss)
+                prev_val=val_loss
+                delta_train=abs(prev_train-agg_loss)
+                prev_train=agg_loss
                 agg_loss=0
+            if ( delta_train<tol or delta_val<tol):
+                print("BREAK")
+                return([U,V])
 
         #agg_loss=agg_loss/len(ehr_data)+regul
         #print(agg_loss.data[0])
 
-        epochs+=1
     return([U,V])
 
 def forward(U,V):
@@ -180,3 +195,108 @@ class EHRDataset(Dataset):
         sample={'data': self.data[idx],'i':self.idx[0][idx],'j':self.idx[1][idx],'t':self.idx[2][idx]}
 
         return sample
+
+class model_train():
+
+    def __init__(self,ehr_data,Xval,sig2=4,K=2,l_r=0.01,epochs_num=100,**opt_args):
+        self.ehr=ehr_data
+        if ('batch_size' in opt_args):
+            batch_size=opt_args['batch_size']
+            print("Batch size ="+str(batch_size))
+        else:
+            batch_size=len(ehr_data) #by default the batch size is set to the full length of the data.
+            print("Full batch")
+
+        self.ehr_loader=DataLoader(ehr_data,batch_size=batch_size)
+
+        self.U=Variable(0.1*torch.randn(ehr_data.shape[0],K,ehr_data.shape[2]),requires_grad=True)
+        self.V=Variable(0.1*torch.randn(K,ehr_data.shape[1]),requires_grad=True)
+
+        self.Xval=Xval
+
+        self.epochs_num=epochs_num
+        self.l_r=l_r
+        self.sig2=sig2
+
+        #Stores the train and validation error over the training process.
+        self.Train_history=np.array([])
+        self.Val_history=np.array([])
+
+        #Convergence parameters.
+        self.delta_val=1
+        self.delta_train=1
+        self.prev_val=1
+        self.prev_train=1
+        self.val_loss=0
+        self.agg_loss=0
+        self.tol=1e-6
+        self.check_freq=20 #every x batches, we compute training and validation loss.
+
+
+
+    def run_train(self):
+        optimizer= torch.optim.Adam([self.U,self.V],lr=self.l_r)
+        for epochs in range(0,self.epochs_num):
+            #for (i,j,t) in zip(*data_idx):
+            self.agg_loss=0
+            print("Epoch :"+str(epochs))
+            for i_batch, sample in enumerate(self.ehr_loader):
+                optimizer.zero_grad()
+                total_loss=0
+                for data_sample,i,j,t in zip(sample['data'],sample['i'],sample['j'],sample['t']):
+                    y_pred=forward(self.U[i,:,t],self.V[:,j])
+                    loss=comp_loss(data_sample,y_pred)
+                    total_loss+=loss
+
+
+                total_loss/=len(sample['data'])
+                regul=regul_loss(self.U,self.V,self.sig2)/len(self.ehr) #A verifier !!!
+                total_loss+=regul # A VERIFIER
+                self.agg_loss+=total_loss.data[0] #Used for convergence check
+
+                total_loss.backward()
+                optimizer.step()
+
+                if ((i_batch+1) % 20 == 0):
+                    self.val_loss=test_loss(self.Xval,self.U,self.V)+regul_loss(self.U,self.V,self.sig2).data[0]/len(self.Xval[1])
+                    self.Val_history=np.append(self.Val_history,self.val_loss)
+                    self.agg_loss/=20
+                    self.Train_history=np.append(self.Train_history,self.agg_loss)
+                    print("Validation Loss : "+str(self.val_loss))
+                    print("Training Loss : "+str(self.agg_loss))
+                    self.delta_val=abs(self.prev_val-self.val_loss)
+                    self.prev_val=self.val_loss
+                    self.delta_train=abs(self.prev_train-self.agg_loss)
+                    self.prev_train=self.agg_loss
+                    self.agg_loss=0
+                if ( self.delta_train<self.tol or self.delta_val<self.tol):
+                    print("BREAK")
+                    return([self.U,self.V])
+
+            #agg_loss=agg_loss/len(ehr_data)+regul
+            #print(agg_loss.data[0])
+        print("No convergence !")
+        return([self.U,self.V])
+
+    def forward(U,V):
+        y=torch.sigmoid(torch.dot(U,V))
+        #y=torch.dot(U[u_idx,:],V[:,v_idx])
+        return(y)
+
+    def regul_loss(U,V,sig2):
+        regul=torch.sum((V.pow(2))/sig2)+torch.sum((U[:,:,0].pow(2))/sig2)
+        for t_idx in range(1,U.shape[2]):
+            regul+=torch.sum(((U[:,:,t_idx]-U[:,:,t_idx-1]).pow(2))/sig2)
+        return(regul)
+
+    def test_loss(Xtest,U,V): #returns a float( not a Tensor !!!)
+        loss=0
+        test_idx=Xtest[0]
+        for id_y,y in enumerate(Xtest[1]):
+            y_data=y
+            i=test_idx[0,id_y]
+            j=test_idx[1,id_y]
+            t=test_idx[2,id_y]
+            y_pred=forward(U[i,:,t],V[:,j]).data[0]
+            loss+=-((1-y_data)*np.log(1-y_pred)+y_data*(np.log(y_pred)))
+        return(loss/len(test_idx[0]))
