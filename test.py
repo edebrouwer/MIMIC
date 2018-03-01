@@ -55,12 +55,19 @@ print("Baseline :"+str(1-sum(Xtest[1])/len(Xtest[1])))
 Unp=U.data.numpy()
 Vnp=V.data.numpy()
 
+np.save("Xtrain",Xtrain)
+np.save("Xtest",Xtest)
+
+np.save("Xtrain_hist",mod.Train_history)
+np.save("Xval_hist",mod.Val_history)
+
+
 #X_prob_inf=mtorch.sigmoid(np.einsum('ijk,jl->ilk',Unp,Vnp))[tuple(Xtest[0])]
 #print('Mean difference of test probabilities : '+str(np.mean(np.abs(X_prob_inf-X_prob[tuple(Xtest[0])]))))
 
 
-plt.plot(mod.Train_history,c="red",label="Training")
-plt.plot(mod.Val_history,c="blue",label="Validation")
-plt.title("Learning Curves")
-plt.legend()
-plt.show()
+#plt.plot(mod.Train_history,c="red",label="Training")
+#plt.plot(mod.Val_history,c="blue",label="Validation")
+#plt.title("Learning Curves")
+#plt.legend()
+#plt.show()
