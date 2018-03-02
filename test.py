@@ -35,8 +35,10 @@ print("Number of time steps: "+str(X_source[2][2]))
 print("Loading data ... ")
 [Xtrain,Xval,Xtest]=mtorch.train_test(X_source,0.2,0.1)
 ehr=EHRDataset(Xtrain)
+print("Number of data points : "+str(len(Xtrain[1])))
+print("Data loaded !")
 
-mod=model_train(ehr,Xval,l_r=0.001,batch_size=200)
+mod=model_train(ehr,Xval,l_r=0.005,batch_size=100)
 [U,V]=mod.run_train()
 
 #train recap :
@@ -54,6 +56,10 @@ print("Baseline :"+str(1-sum(Xtest[1])/len(Xtest[1])))
 
 Unp=U.data.numpy()
 Vnp=V.data.numpy()
+
+
+np.save("Utorch",Unp)
+np.save("Vtorch",Vnp)
 
 np.save("Xtrain",Xtrain)
 np.save("Xtest",Xtest)
