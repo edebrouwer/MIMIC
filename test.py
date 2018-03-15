@@ -8,24 +8,14 @@ from MIMICtorch import model_train
 import torch
 import numpy as np
 
-#import matplotlib.pyplot as plt
+import matplotlib.pyplot as plt
 
 
-#dummy data:
-#pat=150
-#cond=150
-#K_train=2
-#U_train=np.random.randn(pat,K_train,1) #Patient,latent_dim,time
-#V_train=np.random.randn(K_train,cond) #latent_dim,condition
-#X_prod=np.dot(U_train,V_train)
-#X_prod=np.einsum('ijk,jl->ilk',U_train,V_train)
-#X_prob=mtorch.sigmoid(X_prod)
-#X_bin=np.random.binomial(1,X_prob)
-#X_ids=np.asarray(np.where(~np.isnan(X_bin)))
-#X_source=(X_ids,X_bin[tuple(X_ids)],X_bin.shape)
+#dummy data creation :
+[X_source,X_prob,U_train,V_train]=dev.dummy_data_gen(pat=50,cond=50,K=3,T=30,sig2_walk=0.2)
 
 print("Sourcing Data ... ")
-X_source=dev.matrix_creation() # Tuple with index and data of the matrix source.
+#X_source=dev.matrix_creation() # Tuple with index and data of the matrix source.
 print("Data Sourced")
 print("Number of patients: "+str(X_source[2][0]))
 print("Number of conditions: "+str(X_source[2][1]))
@@ -38,7 +28,7 @@ ehr=EHRDataset(Xtrain)
 print("Number of data points : "+str(len(Xtrain[1])))
 print("Data loaded !")
 
-mod=model_train(ehr,Xval,l_r=0.005,batch_size=100)
+mod=model_train(ehr,Xval,l_r=0.005,batch_size=500,epochs_num=300,sig2_prior=2,K=2,l_kernel=4,kernel_type="square-exp")
 [U,V]=mod.run_train()
 
 #train recap :
@@ -61,6 +51,9 @@ Vnp=V.data.numpy()
 np.save("Utorch",Unp)
 np.save("Vtorch",Vnp)
 
+np.save("Utrain",U_train)
+np.save("Vtrain",V_train)
+
 np.save("Xtrain",Xtrain)
 np.save("Xtest",Xtest)
 
@@ -68,12 +61,12 @@ np.save("Xtrain_hist",mod.Train_history)
 np.save("Xval_hist",mod.Val_history)
 
 
-#X_prob_inf=mtorch.sigmoid(np.einsum('ijk,jl->ilk',Unp,Vnp))[tuple(Xtest[0])]
-#print('Mean difference of test probabilities : '+str(np.mean(np.abs(X_prob_inf-X_prob[tuple(Xtest[0])]))))
+X_prob_inf=mtorch.sigmoid(np.einsum('ijk,jl->ilk',Unp,Vnp))[tuple(Xtest[0])]
+print('Mean difference of test probabilities : '+str(np.mean(np.abs(X_prob_inf-X_prob[tuple(Xtest[0])]))))
+print('Baseline : '+str(np.sqrt(np.var(X_prob[tuple(Xtest[0])]))))
 
-
-#plt.plot(mod.Train_history,c="red",label="Training")
-#plt.plot(mod.Val_history,c="blue",label="Validation")
-#plt.title("Learning Curves")
-#plt.legend()
-#plt.show()
+plt.plot(mod.Train_history,c="red",label="Training")
+plt.plot(mod.Val_history,c="blue",label="Validation")
+plt.title("Learning Curves")
+plt.legend()
+plt.show()

@@ -197,3 +197,20 @@ def grad_v(t_idx,v_idx,U,V,data_v,sig2):
 
     grad=grad_1+grad_2 #gradient for the u vector
     return grad
+
+def sigmoid(x):
+    return 1/(1+np.exp(-x))
+
+def dummy_data_gen(pat=100,cond=10,K=2,T=52,sig2_walk=0.2):
+    #use random walk to generate the U's.
+    U_train=np.zeros((pat,K,T)) #Patient,latent_dim,time
+    for i in range(T):
+        U_train[:,:,i]=np.sqrt(sig2_walk)*np.random.randn(pat,K)+U_train[:,:,i-1]
+    V_train=np.sqrt(sig2_walk)*np.random.randn(K,cond)
+
+    X_prod=np.einsum('ijk,jl->ilk',U_train,V_train)
+    X_prob=sigmoid(X_prod)
+    X_bin=np.random.binomial(1,X_prob)
+    X_ids=np.asarray(np.where(~np.isnan(X_bin)))
+    X_source=(X_ids,X_bin[tuple(X_ids)],X_bin.shape)
+    return([X_source,X_prob,U_train,V_train])
