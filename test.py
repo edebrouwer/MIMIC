@@ -12,7 +12,7 @@ import numpy as np
 
 
 #dummy data creation :
-[X_source,X_prob,U_train,V_train]=dev.dummy_data_gen(pat=20,cond=20,K=1,T=20,sig2_walk=0.2)
+[X_source,X_bin,X_prob,U_train,V_train]=dev.dummy_data_gen(pat=20,cond=20,K=1,T=20,sig2_walk=0.2)
 
 print("Sourcing Data ... ")
 X_source=dev.matrix_creation() # Tuple with index and data of the matrix source.
