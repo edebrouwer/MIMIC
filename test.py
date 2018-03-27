@@ -15,7 +15,7 @@ import matplotlib.pyplot as plt
 [X_source,X_prob,U_train,V_train]=dev.dummy_data_gen(pat=20,cond=20,K=1,T=20,sig2_walk=0.2)
 
 print("Sourcing Data ... ")
-#X_source=dev.matrix_creation() # Tuple with index and data of the matrix source.
+X_source=dev.matrix_creation() # Tuple with index and data of the matrix source.
 print("Data Sourced")
 print("Number of patients: "+str(X_source[2][0]))
 print("Number of conditions: "+str(X_source[2][1]))
