@@ -217,15 +217,17 @@ class EHRDataset(Dataset):
 
 class model_train():
 
-    def __init__(self,ehr_data,Xval,sig2_prior=4,sig2_lik=2,K=2,l_r=0.01,epochs_num=100,learning_decay=0.98,regul_inv=0.00001,l_kernel=1,**opt_args):
+    def __init__(self,ehr_data,Xval,sig2_prior=4,sig2_lik=2,K=2,l_r=0.01,epochs_num=100,check_freq=40,learning_decay=0.99,regul_inv=0.00001,l_kernel=1,**opt_args):
         self.ehr=ehr_data
         if ('batch_size' in opt_args):
             batch_size=opt_args['batch_size']
-            self.check_freq=40 #every x batches, we compute training and validation loss.
+            self.check_freq=check_freq #every x batches, we compute training and validation loss.
+            self.learning_decay=learning_decay
             print("Batch size ="+str(batch_size))
         else:
             batch_size=len(ehr_data) #by default the batch size is set to the full length of the data.
             self.check_freq=1
+            self.learning_decay=1
             print("Full batch")
 
 
@@ -235,13 +237,14 @@ class model_train():
 
         self.U=Variable(0.1*torch.randn(ehr_data.shape[0],K,self.T),requires_grad=True)
         self.V=Variable(0.1*torch.randn(K,ehr_data.shape[1]),requires_grad=True)
+        #self.V=Variable(torch.ones(K,ehr_data.shape[1]))
 
         self.Xval=Xval
 
         self.epochs_num=epochs_num
         self.l_r=l_r
-        self.learning_decay=learning_decay
-        self.sig2_prior=sig2_prior
+
+        self.sig2_prior=Variable(torch.from_numpy(np.array([sig2_prior])).type(torch.FloatTensor),requires_grad=True)
         self.sig2_lik=sig2_lik
 
         self.regul_inv=regul_inv # regularization for the inversion of the kernel matrix.
@@ -255,7 +258,7 @@ class model_train():
             self.kernel_type=opt_args['kernel_type']
             x_samp=np.linspace(0,self.T-1,self.T)
             self.SexpKernel=np.exp(-(np.array([x_samp]*self.T)-np.expand_dims(x_samp.T,axis=1))**2/(2*l_kernel**2))
-            self.inv_Kernel=Variable(torch.from_numpy(np.linalg.inv(self.SexpKernel+self.regul_inv*np.identity(self.T))).type(torch.FloatTensor))/sig2_prior
+            self.inv_Kernel=Variable(torch.from_numpy(np.linalg.inv(self.SexpKernel+self.regul_inv*np.identity(self.T))).type(torch.FloatTensor))#/sig2_prior
         else:
             self.kernel_type="random-walk" #by default.
             self.SexpKernel=0
@@ -273,7 +276,8 @@ class model_train():
 
 
     def run_train(self):
-        optimizer= torch.optim.Adam([self.U,self.V],lr=self.l_r)
+        optimizer= torch.optim.Adam([self.U,self.V,self.sig2_prior],lr=self.l_r)
+        #optimizer= torch.optim.Adam([self.U],lr=self.l_r)
         scheduler_lr=ExponentialLR(optimizer, gamma=self.learning_decay) #Exponential Decay
 
         if (self.kernel_type=='square-exp'):
@@ -353,9 +357,9 @@ class model_train():
 
     def regul_loss_GP(self,U,V,sig2):
         K=U.shape[1]
-        regul=torch.sum((V.pow(2))/sig2)+torch.sum((U[:,:,0].pow(2))/sig2)
+        regul=0.5*torch.sum((V.pow(2))/sig2)+torch.sum((U[:,:,0].pow(2))/sig2)+0.1*sig2
         for p_idx in range(1,U.shape[0]):
-            regul+=0.5*torch.sum(torch.mm(U[p_idx,:,:],torch.mm(self.inv_Kernel,U[p_idx,:,:].t()))[range(K),range(K)])
+            regul+=0.5*torch.sum(torch.mm(U[p_idx,:,:],torch.mm(self.inv_Kernel,U[p_idx,:,:].t()))[range(K),range(K)])/sig2
         return(regul)
 
 
