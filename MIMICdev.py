@@ -63,7 +63,7 @@ def ICD9(adm_file="../ADMISSIONS.csv",diag_file="../DIAGNOSES_ICD.csv",ICD9_coun
     data_s.to_csv(outfile)
     return data_s
 
-def matrix_creation(ICD9_file="/data/edebrouwer/MIMICs/ICD9Clean.csv",granul=7,ICD9_count=3,ICD9_cap=5,Time_quantile=0.8):
+def matrix_creation(ICD9_file="/data/edebrouwer/MIMICs/ICD9Clean.csv",granul=7,ICD9_count=3,ICD9_cap=5,Time_quantile=0.7):
     #Input file for the matrix creation
     #granul = The desired granularity in days.
     #Return a tuple with the index and values of the non empty elements of the matrix.
