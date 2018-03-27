@@ -12,10 +12,10 @@ import numpy as np
 
 
 #dummy data creation :
-[X_source,X_bin,X_prob,U_train,V_train]=dev.dummy_data_gen(pat=20,cond=20,K=1,T=20,sig2_walk=0.2)
+[X_source,X_bin,X_prob,U_train,V_train]=dev.dummy_data_gen(pat=20,cond=20,K=2,T=120,sig2_walk=0.2)
 
 print("Sourcing Data ... ")
-X_source=dev.matrix_creation() # Tuple with index and data of the matrix source.
+#X_source=dev.matrix_creation() # Tuple with index and data of the matrix source.
 print("Data Sourced")
 print("Number of patients: "+str(X_source[2][0]))
 print("Number of conditions: "+str(X_source[2][1]))
@@ -28,7 +28,7 @@ ehr=EHRDataset(Xtrain)
 print("Number of data points : "+str(len(Xtrain[1])))
 print("Data loaded !")
 
-mod=model_train(ehr,Xval,l_r=0.005,epochs_num=500,batch_size=100,sig2_prior=2,K=1,check_freq=10,l_kernel=3,kernel_type="square-exp")
+mod=model_train(ehr,Xval,l_r=0.005,epochs_num=500,batch_size=500,sig2_prior=2,K=2,check_freq=20,l_kernel=3,kernel_type="square-exp")
 [U,V]=mod.run_train()
 
 #train recap :

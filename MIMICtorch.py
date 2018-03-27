@@ -140,6 +140,15 @@ def test_loss(Xtest,U,V): #returns a float( not a Tensor !!!)
         j=test_idx[1,id_y]
         t=test_idx[2,id_y]
         y_pred=forward(U[i,:,t],V[:,j]).data[0]
+
+        #This is a dirty hack, look for better solution !!
+        if (y_pred==1):
+            print("y_pred is one")
+            y_pred=0.99999
+        if (y_pred==0):
+            print("y_pred is zero")
+            y_pred=0.00001
+
         loss+=-((1-y_data)*np.log(1-y_pred)+y_data*(np.log(y_pred)))
     return(loss/len(test_idx[0]))
 
@@ -300,6 +309,11 @@ class model_train():
                     for data_sample,i,j,t in zip(sample['data'],sample['i'],sample['j'],sample['t']):
                         y_pred=self.forward(self.U[i,:,t],self.V[:,j])
                         loss=self.comp_loss(data_sample,y_pred)
+
+                        #if (loss.data[0]==0):
+                    #        print("Issue in prediction at "+str(i)+" "+str(j)+" "+str(t))
+                #            return([self.U,self.V])
+
                         total_loss+=loss
 
                     total_loss/=len(sample['data'])
@@ -346,9 +360,16 @@ class model_train():
         return(y)
 
     def comp_loss(self,y_data,y_pred):
-        loss=-((1-y_data)*torch.log(1-y_pred)+y_data*(torch.log(y_pred)))#+(1/len_v)*torch.sum((V[:,v_idx].pow(2))/sig2)+(1/len_u)*torch.sum((U[u_idx,:].pow(2))/sig2)
-        #print(loss)
-        #loss=(y_data-y_pred).pow(2)+torch.sum((V[:,2].pow(2))/2)
+        #This is a dirty hack, look for better solution !!
+        if (y_pred.data[0]==1):
+            print("y_pred is one")
+            y_pred.data[0]=0.99999
+        if (y_pred.data[0]==0):
+            print("y_pred is zero")
+            y_pred.data[0]=0.00001
+
+        loss=-((1-y_data)*torch.log(1-y_pred)+y_data*(torch.log(y_pred)))
+
         return(loss)
 
     def comp_loss_normal(self,y_data,y_pred):
@@ -380,6 +401,15 @@ class model_train():
             j=test_idx[1,id_y]
             t=test_idx[2,id_y]
             y_pred=self.forward(U[i,:,t],V[:,j]).data[0]
+
+            #This is a dirty hack, look for better solution !!
+            if (y_pred==1):
+                print("y_pred is one")
+                y_pred=0.99999
+            if (y_pred==0):
+                print("y_pred is zero")
+                y_pred=0.00001
+
             loss+=-((1-y_data)*np.log(1-y_pred)+y_data*(np.log(y_pred)))
         return(loss/len(test_idx[0]))
 
