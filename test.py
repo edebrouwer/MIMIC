@@ -8,7 +8,7 @@ from MIMICtorch import model_train
 import torch
 import numpy as np
 
-import matplotlib.pyplot as plt
+#import matplotlib.pyplot as plt
 
 
 #dummy data creation :
@@ -65,8 +65,8 @@ X_prob_inf=mtorch.sigmoid(np.einsum('ijk,jl->ilk',Unp,Vnp))[tuple(Xtest[0])]
 print('Mean difference of test probabilities : '+str(np.mean(np.abs(X_prob_inf-X_prob[tuple(Xtest[0])]))))
 print('Baseline : '+str(np.sqrt(np.var(X_prob[tuple(Xtest[0])]))))
 
-plt.plot(mod.Train_history,c="red",label="Training")
-plt.plot(mod.Val_history,c="blue",label="Validation")
-plt.title("Learning Curves")
-plt.legend()
-plt.show()
+#plt.plot(mod.Train_history,c="red",label="Training")
+#plt.plot(mod.Val_history,c="blue",label="Validation")
+#plt.title("Learning Curves")
+#plt.legend()
+#plt.show()
