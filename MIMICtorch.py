@@ -240,7 +240,7 @@ class model_train():
             print("Full batch")
 
 
-        self.ehr_loader=DataLoader(ehr_data,batch_size=batch_size,shuffle=True)
+        self.ehr_loader=DataLoader(ehr_data,batch_size=batch_size,shuffle=True,num_workers=8)
 
         self.T=ehr_data.shape[2] #Number of time steps
 
