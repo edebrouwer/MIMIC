@@ -23,7 +23,7 @@ ehr=EHRDataset(Xtrain)
 print("Number of data points : "+str(len(Xtrain[1])))
 print("Data loaded !")
 
-mod=model_train(ehr,Xval,l_r=0.005,epochs_num=500,batch_size=1000,sig2_prior=2,K=2,check_freq=20,l_kernel=3,kernel_type="square-exp")
+mod=model_train(ehr,Xval,l_r=0.005,epochs_num=500,batch_size=10000,sig2_prior=2,K=2,check_freq=50,l_kernel=5,kernel_type="square-exp")
 [U,V]=mod.run_train()
 
 #train recap :
