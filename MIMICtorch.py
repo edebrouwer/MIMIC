@@ -354,8 +354,10 @@ class model_train():
                     total_loss+=regul # A VERIFIER
                     self.agg_loss+=total_loss.data[0] #Used for convergence check
 
+                    T4=time.time()
                     total_loss.backward()
                     optimizer.step()
+                    print("Optimization step is" + str(time.time()-T4))
 
                     if ((i_batch+1) % self.check_freq == 0):
                         self.val_loss=self.test_loss(self.Xval,self.U,self.V)+regul_loss_fun(self.U,self.V,self.sig2_prior).data[0]/len(self.ehr)
