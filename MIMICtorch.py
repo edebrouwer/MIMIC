@@ -344,6 +344,7 @@ class model_train():
                         loss=self.comp_loss(data_sample,y_pred)
                         total_loss+=loss
 
+                    print("Training loss computation is "+ str(time.time()-T0))
                     #total_loss/=len(sample['data']) #For first EHRDataLoader
                     total_loss/=sample[1].shape[0]
 
@@ -372,6 +373,7 @@ class model_train():
                     print ("Processing One batch is " + str(time.time()-T0))
                     i_batch+=1
                     T1=time.time()
+
         except KeyboardInterrupt:
             print("Training Stopped by user")
             return([self.U,self.V])
