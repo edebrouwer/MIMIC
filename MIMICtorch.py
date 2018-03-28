@@ -224,6 +224,33 @@ class EHRDataset(Dataset):
 
         return sample
 
+
+class EHRDataset2(Dataset):
+    """Face Landmarks dataset."""
+
+    def __init__(self, fdat,fidx,shapeX,lengthX, transform=None):
+        """
+        Args:
+            csv_file (string): Path to the csv file with annotations.
+            root_dir (string): Directory with all the images.
+            transform (callable, optional): Optional transform to be applied
+                on a sample.
+        """
+        self.fpdat=np.memmap(fdat,mode='r')
+        self.fpidx=np.memmap(fidx,mode='r',shape=(3,lengthX))
+        self.shape=shapeX
+        self.l=lengthX
+
+    def __len__(self):
+        return(self.l)
+
+
+    def __getitem__(self, idx):
+
+        sample={'data': self.fpdat[idx],'i':self.fpidx[0,idx],'j':self.fpidx[1,idx],'t':self.fpidx[2,idx]}
+
+        return sample
+
 class model_train():
 
     def __init__(self,ehr_data,Xval,sig2_prior=4,sig2_lik=2,K=2,l_r=0.01,epochs_num=100,check_freq=40,learning_decay=0.99,regul_inv=0.00001,l_kernel=1,**opt_args):
