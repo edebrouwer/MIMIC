@@ -269,6 +269,7 @@ class model_train():
         self.ehr_loader=DataLoader(ehr_data,batch_size=batch_size,shuffle=True,num_workers=0)
 
         self.T=ehr_data.shape[2] #Number of time steps
+        self.K=K
 
         self.U=Variable(0.1*torch.randn(ehr_data.shape[0],K,self.T),requires_grad=True)
         self.V=Variable(0.1*torch.randn(K,ehr_data.shape[1]),requires_grad=True)
@@ -333,7 +334,7 @@ class model_train():
                 i_batch=0
                 T1=time.time()
                 for sample in self.ehr_loader:
-                    print ("Loading one batch is " + str(time.time()-T1))
+                    #print ("Loading one batch is " + str(time.time()-T1))
                     T0=time.time()
                     optimizer.zero_grad()
                     total_loss=0
@@ -344,21 +345,19 @@ class model_train():
                         loss=self.comp_loss(data_sample,y_pred)
                         total_loss+=loss
 
-                    print("Training loss computation is "+ str(time.time()-T0))
                     #total_loss/=len(sample['data']) #For first EHRDataLoader
                     total_loss/=sample[1].shape[0]
 
-                    T3=time.time()
-                    #regul=regul_loss_fun(self.U,self.V,self.sig2_prior)/len(self.ehr) #A verifier !!!
-                    regul=0
-                    print("Regul loss computation is "+ str(time.time()-T3))
+                    regul=regul_loss_fun(self.U,self.V,self.sig2_prior)/len(self.ehr) #A verifier !!!
+
                     total_loss+=regul # A VERIFIER
                     self.agg_loss+=total_loss.data[0] #Used for convergence check
 
                     T4=time.time()
                     total_loss.backward()
+                    self.compute_gradreg(len(self.ehr))
                     optimizer.step()
-                    print("Optimization step is" + str(time.time()-T4))
+                    #print("Optimization step is" + str(time.time()-T4))
 
                     if ((i_batch+1) % self.check_freq == 0):
                         self.val_loss=self.test_loss(self.Xval,self.U,self.V)+regul_loss_fun(self.U,self.V,self.sig2_prior).data[0]/len(self.ehr)
@@ -375,7 +374,7 @@ class model_train():
                     if ( self.delta_train<self.tol or self.delta_val<self.tol):
                         print("BREAK")
                         return([self.U,self.V])
-                    print ("Processing One batch is " + str(time.time()-T0))
+                    #print ("Processing One batch is " + str(time.time()-T0))
                     i_batch+=1
                     T1=time.time()
 
@@ -397,6 +396,10 @@ class model_train():
         y=torch.dot(U,V)
         return(y)
 
+    def compute_gradreg(self,norm_fact):
+        for k_idx in range(self.K):
+            self.U.grad[:,k_idx,:]=self.U.grad[:,k_idx,:]+torch.mm(self.U[:,k_idx,:],self.inv_Kernel)/(norm_fact*self.sig2_prior)
+
     def comp_loss(self,y_data,y_pred):
         #This is a dirty hack, look for better solution !!
         if (y_pred.data[0]==1):
@@ -416,9 +419,9 @@ class model_train():
 
     def regul_loss_GP(self,U,V,sig2):
         K=U.shape[1]
-        regul=0.5*torch.sum((V.pow(2))/sig2)+torch.sum((U[:,:,0].pow(2))/sig2)+0.1*sig2
-        for p_idx in range(1,U.shape[0]):
-            regul+=0.5*torch.sum(torch.mm(U[p_idx,:,:],torch.mm(self.inv_Kernel,U[p_idx,:,:].t()))[range(K),range(K)])/sig2
+        regul=0.5*torch.sum((V.pow(2))/sig2)+0.1*sig2#+torch.sum((U[:,:,0].pow(2))/sig2)
+        #for p_idx in range(U.shape[0]):
+        #    regul+=0.5*torch.sum(torch.mm(U[p_idx,:,:],torch.mm(self.inv_Kernel,U[p_idx,:,:].t()))[range(K),range(K)])/sig2
         return(regul)
 
 
