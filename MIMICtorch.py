@@ -419,8 +419,8 @@ class model_train():
         #for p_idx in range(1,U.shape[0]):
         #    regul+=0.5*torch.sum(torch.mm(U[p_idx,:,:],torch.mm(self.inv_Kernel,U[p_idx,:,:].t()))[range(K),range(K)])/sig2
         for p_idx in range(1,U.shape[0]):
-            for k_idx in range(K)
-            regul+=0.5*torch.sum(torch.mm(U[p_idx,k_idx,:],torch.mm(self.inv_Kernel,U[p_idx,k_idx,:].t())))/sig2
+            for k_idx in range(K):
+                regul+=0.5*torch.sum(torch.mm(U[p_idx,k_idx,:],torch.mm(self.inv_Kernel,U[p_idx,k_idx,:].t())))/sig2
         return(regul)
 
 
