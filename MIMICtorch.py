@@ -6,7 +6,7 @@ from torch.autograd import Variable
 from torch.utils.data import Dataset, DataLoader
 
 from torch.optim.lr_scheduler import ExponentialLR
-
+import time
 
 
 def pre_proc_data(X_source,prop):
@@ -66,6 +66,7 @@ def run_training(ehr_data,Xval,sig2=4,K=2,l_r=0.01,**opt_args):
                     print("Issue NAN")
                     print(U)
                     print(V)
+
 
 
 
@@ -249,32 +250,6 @@ class EHRDataset3(Dataset):
 
         return self.idx[:,idx],self.data[idx]
 
-class EHRDataset2(Dataset):
-    """Face Landmarks dataset."""
-
-    def __init__(self, fdat,fidx,shapeX,lengthX, transform=None):
-        """
-        Args:
-            csv_file (string): Path to the csv file with annotations.
-            root_dir (string): Directory with all the images.
-            transform (callable, optional): Optional transform to be applied
-                on a sample.
-        """
-        self.fpdat=np.memmap(fdat,mode='r')
-        self.fpidx=np.memmap(fidx,mode='r',shape=(3,lengthX))
-        self.shape=shapeX
-        self.l=lengthX
-
-    def __len__(self):
-        return(self.l)
-
-
-    def __getitem__(self, idx):
-
-        sample={'data': self.fpdat[idx],'i':self.fpidx[0,idx],'j':self.fpidx[1,idx],'t':self.fpidx[2,idx]}
-
-        return sample
-
 class model_train():
 
     def __init__(self,ehr_data,Xval,sig2_prior=4,sig2_lik=2,K=2,l_r=0.01,epochs_num=100,check_freq=40,learning_decay=0.99,regul_inv=0.00001,l_kernel=1,**opt_args):
@@ -354,17 +329,22 @@ class model_train():
                 #for (i,j,t) in zip(*data_idx):
                 self.agg_loss=0
                 print("Epoch :"+str(epochs)+" number of data samples ="+str(len(self.ehr)))
-                for i_batch, sample in enumerate(self.ehr_loader):
+
+                i_batch=0
+                T1=time.time()
+                for sample in self.ehr_loader:
+                    print ("Loading one batch is " + str(time.time()-T1))
+                    T0=time.time()
                     optimizer.zero_grad()
                     total_loss=0
-                    #for data_sample,i,j,t in zip(sample['data'],sample['i'],sample['j'],sample['t']):
+                    #for data_sample,i,j,t in zip(sample['data'],sample['i'],sample['j'],sample['t']): #For  first EHRDataLoader
 
                     for data_sample,i,j,t in zip(sample[1],sample[0][:,0],sample[0][:,1],sample[0][:,2]):
                         y_pred=self.forward(self.U[i,:,t],self.V[:,j])
                         loss=self.comp_loss(data_sample,y_pred)
                         total_loss+=loss
 
-                    #total_loss/=len(sample['data'])
+                    #total_loss/=len(sample['data']) #For first EHRDataLoader
                     total_loss/=sample[1].shape[0]
 
                     regul=regul_loss_fun(self.U,self.V,self.sig2_prior)/len(self.ehr) #A verifier !!!
@@ -389,7 +369,9 @@ class model_train():
                     if ( self.delta_train<self.tol or self.delta_val<self.tol):
                         print("BREAK")
                         return([self.U,self.V])
-
+                    print ("Processing One batch is " + str(time.time()-T0))
+                    i_batch+=1
+                    T1=time.time()
         except KeyboardInterrupt:
             print("Training Stopped by user")
             return([self.U,self.V])
