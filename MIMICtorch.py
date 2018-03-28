@@ -348,7 +348,9 @@ class model_train():
                     #total_loss/=len(sample['data']) #For first EHRDataLoader
                     total_loss/=sample[1].shape[0]
 
+                    T3=time.time()
                     regul=regul_loss_fun(self.U,self.V,self.sig2_prior)/len(self.ehr) #A verifier !!!
+                    print("Regul loss computation is "+ str(time.time()-T3))
                     total_loss+=regul # A VERIFIER
                     self.agg_loss+=total_loss.data[0] #Used for convergence check
 
