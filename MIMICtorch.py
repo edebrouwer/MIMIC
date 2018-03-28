@@ -224,6 +224,30 @@ class EHRDataset(Dataset):
 
         return sample
 
+class EHRDataset3(Dataset):
+    """Face Landmarks dataset."""
+
+    def __init__(self, X_source, transform=None):
+        """
+        Args:
+            csv_file (string): Path to the csv file with annotations.
+            root_dir (string): Directory with all the images.
+            transform (callable, optional): Optional transform to be applied
+                on a sample.
+        """
+        self.idx=torch.from_numpy(X_source[0])
+        self.data=torch.from_numpy(X_source[1])
+        self.shape=X_source[2]
+
+    def __len__(self):
+        return len(self.idx[0])
+
+
+    def __getitem__(self, idx):
+
+        #sample={'data': self.data[idx],'i':self.idx[0][idx],'j':self.idx[1][idx],'t':self.idx[2][idx]}
+
+        return self.idx[:,idx],self.data[idx]
 
 class EHRDataset2(Dataset):
     """Face Landmarks dataset."""
@@ -333,17 +357,15 @@ class model_train():
                 for i_batch, sample in enumerate(self.ehr_loader):
                     optimizer.zero_grad()
                     total_loss=0
-                    for data_sample,i,j,t in zip(sample['data'],sample['i'],sample['j'],sample['t']):
+                    #for data_sample,i,j,t in zip(sample['data'],sample['i'],sample['j'],sample['t']):
+
+                    for data_sample,i,j,t in zip(sample[1],sample[0][:,0],sample[0][:,1],sample[0][:,2]):
                         y_pred=self.forward(self.U[i,:,t],self.V[:,j])
                         loss=self.comp_loss(data_sample,y_pred)
-
-                        #if (loss.data[0]==0):
-                    #        print("Issue in prediction at "+str(i)+" "+str(j)+" "+str(t))
-                #            return([self.U,self.V])
-
                         total_loss+=loss
 
-                    total_loss/=len(sample['data'])
+                    #total_loss/=len(sample['data'])
+                    total_loss/=sample[1].shape[0]
 
                     regul=regul_loss_fun(self.U,self.V,self.sig2_prior)/len(self.ehr) #A verifier !!!
                     total_loss+=regul # A VERIFIER
