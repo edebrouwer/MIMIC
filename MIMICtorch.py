@@ -349,7 +349,8 @@ class model_train():
                     total_loss/=sample[1].shape[0]
 
                     T3=time.time()
-                    regul=regul_loss_fun(self.U,self.V,self.sig2_prior)/len(self.ehr) #A verifier !!!
+                    #regul=regul_loss_fun(self.U,self.V,self.sig2_prior)/len(self.ehr) #A verifier !!!
+                    regul=0
                     print("Regul loss computation is "+ str(time.time()-T3))
                     total_loss+=regul # A VERIFIER
                     self.agg_loss+=total_loss.data[0] #Used for convergence check
@@ -416,11 +417,8 @@ class model_train():
     def regul_loss_GP(self,U,V,sig2):
         K=U.shape[1]
         regul=0.5*torch.sum((V.pow(2))/sig2)+torch.sum((U[:,:,0].pow(2))/sig2)+0.1*sig2
-        #for p_idx in range(1,U.shape[0]):
-        #    regul+=0.5*torch.sum(torch.mm(U[p_idx,:,:],torch.mm(self.inv_Kernel,U[p_idx,:,:].t()))[range(K),range(K)])/sig2
         for p_idx in range(1,U.shape[0]):
-            for k_idx in range(K):
-                regul+=0.5*torch.sum(torch.mm(U[p_idx,k_idx,:],torch.mm(self.inv_Kernel,U[p_idx,k_idx,:].t())))/sig2
+            regul+=0.5*torch.sum(torch.mm(U[p_idx,:,:],torch.mm(self.inv_Kernel,U[p_idx,:,:].t()))[range(K),range(K)])/sig2
         return(regul)
 
 
