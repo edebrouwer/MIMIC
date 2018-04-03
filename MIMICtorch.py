@@ -308,7 +308,7 @@ class model_train():
         self.prev_train=1e5
         self.val_loss=0
         self.agg_loss=0
-        self.tol=1e-6
+        self.tol=1e-8
 
 
     def run_train(self):
