@@ -357,7 +357,7 @@ class model_train():
                     total_loss.backward()
                     self.compute_gradreg(len(self.ehr))
                     optimizer.step()
-                    print("Optimization step is" + str(time.time()-T4))
+                    #print("Optimization step is" + str(time.time()-T4))
 
                     if ((i_batch+1) % self.check_freq == 0):
                         self.val_loss=self.test_loss(self.Xval,self.U,self.V)+regul_loss_fun(self.U,self.V,self.sig2_prior).data[0]/len(self.ehr)
@@ -399,6 +399,8 @@ class model_train():
     def compute_gradreg(self,norm_fact):
         for k_idx in range(self.K):
             self.U.grad[:,k_idx,:]=self.U.grad[:,k_idx,:]+torch.mm(self.U[:,k_idx,:],self.inv_Kernel)/(norm_fact*self.sig2_prior)
+        #self.V.grad=self.V.grad/(norm_fact*self.sig2_prior)
+        #self.sig2_prior.grad=0.1*self.sig2_prior/norm_fact
 
     def comp_loss(self,y_data,y_pred):
         #This is a dirty hack, look for better solution !!
@@ -419,7 +421,7 @@ class model_train():
 
     def regul_loss_GP(self,U,V,sig2):
         K=U.shape[1]
-        regul=0.5*torch.sum((V.pow(2))/sig2)+0.1*sig2#+torch.sum((U[:,:,0].pow(2))/sig2)
+        regul=0.5*torch.sum((V.pow(2))/sig2)+0.1*sig2.pow(2)#+torch.sum((U[:,:,0].pow(2))/sig2)
         #for p_idx in range(U.shape[0]):
         #    regul+=0.5*torch.sum(torch.mm(U[p_idx,:,:],torch.mm(self.inv_Kernel,U[p_idx,:,:].t()))[range(K),range(K)])/sig2
         return(regul)
