@@ -2,7 +2,7 @@
 import MIMICdev as dev
 import MIMICtorch as mtorch
 
-from MIMICtorch import EHRDataset,EHRDataset2
+from MIMICtorch import EHRDataset,EHRDataset3
 from MIMICtorch import model_train
 
 import torch
@@ -13,7 +13,7 @@ import matplotlib.pyplot as plt
 import os.path as path
 
 #dummy data creation :
-[X_source,X_bin,X_prob,U_train,V_train]=dev.dummy_data_gen(pat=70,cond=40,K=2,T=120,sig2_walk=0.2)
+[X_source,X_bin,X_prob,U_train,V_train]=dev.dummy_data_gen(pat=40,cond=40,K=2,T=100,sig2_walk=0.2)
 
 print("Sourcing Data ... ")
 #X_source=dev.matrix_creation() # Tuple with index and data of the matrix source.
@@ -26,20 +26,11 @@ print("Number of time steps: "+str(X_source[2][2]))
 print("Loading data ... ")
 [Xtrain,Xval,Xtest]=mtorch.train_test(X_source,0.2,0.1)
 
-file_dat=path.join('./fpdata.dat')
-file_idx=path.join('./fpidx.dat')
-fp_dat=np.memmap(file_dat,mode="w+",shape=Xtrain[1].shape)
-fp_dat[:]=Xtrain[1]
-fp_idx=np.memmap(file_idx,mode="w+",shape=Xtrain[0].shape)
-fp_idx[:]=Xtrain[0]
-
-#ehr=EHRDataset(Xtrain)
-ehr=EHRDataset2(file_dat,file_idx,Xtrain[2],len(Xtrain[0][0]))
+ehr=EHRDataset3(Xtrain)
 print("Number of data points : "+str(len(Xtrain[1])))
 print("Data loaded !")
 
-del Xtrain
-mod=model_train(ehr,Xval,l_r=0.005,epochs_num=500,batch_size=1000,sig2_prior=2,K=2,check_freq=20,l_kernel=3,kernel_type="square-exp")
+mod=model_train(ehr,Xval,l_r=0.005,epochs_num=500,batch_size=1000,sig2_prior=2,K=2,check_freq=50,l_kernel=3,kernel_type="square-exp")
 [U,V]=mod.run_train()
 
 #train recap :
