@@ -5,10 +5,10 @@ import pandas as pd
 import numpy as np
 import progressbar
 
-def ICD9(adm_file="../ADMISSIONS.csv",diag_file="../DIAGNOSES_ICD.csv",ICD9_count=3,outfile=None):
+def ICD9(adm_file="/data/edebrouwer/MIMICs/ADMISSIONS.csv",diag_file="/data/edebrouwer/MIMICs/DIAGNOSES_ICD.csv",ICD9_count=3,outfile=None,digit_num=2):
     #This function gives back a df with the time of admissions of each patient
     #with the first admission as reference and their ICD9_count first diagnostics for each
-    #admission. The ICD9 codes are cropped so that only the 3 first digits remain.
+    #admission. The ICD9 codes are cropped so that only the digit_num first digits remain.
     #ICD9 counts is the number of ICD9 codes we consider by admission.
     print("Reading from "+adm_file)
     adm=pd.read_csv(adm_file)
@@ -48,7 +48,7 @@ def ICD9(adm_file="../ADMISSIONS.csv",diag_file="../DIAGNOSES_ICD.csv",ICD9_coun
     data_s=data_death[col_selection].sort_values(["SUBJECT_ID","ELAPSED_TIME"])
     #Clean the ICD9 to 3 digits
     for idx in range(1,Diag_num+1):
-        data_s["ICD9_CODE_"+str(idx)]=data_s["ICD9_CODE_"+str(idx)].str[:3]
+        data_s["ICD9_CODE_"+str(idx)]=data_s["ICD9_CODE_"+str(idx)].str[:digit_num]
     #Add days granularity
     data_s["ELAPSED_DAYS"]=data_s["ELAPSED_TIME"].dt.days
 
